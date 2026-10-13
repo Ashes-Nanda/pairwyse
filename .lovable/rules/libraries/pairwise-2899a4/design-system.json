@@ -1,0 +1,934 @@
+{
+  "meta": {
+    "name": "Pairwise",
+    "package": "@ws-rnndiwtrka661xp4gcy1/1a8dfb7a-c8d3-4836-910d-068159b62f22",
+    "version": "1.0.0",
+    "framework": "react",
+    "css_framework": "css-variables",
+    "starter_template": "custom_design_system",
+    "theme_files": [
+      "src/pairwise/theme.css"
+    ],
+    "source_type": "local",
+    "source_manifest": {
+      "#enrichment": "644377a10a8c67ddf30f16aa949eaf06d73a33feb50c2c5a0fc8f8a103eabece",
+      ".dsignore": "48b755bfe30315a92b675843f3cabb0a",
+      ".gitignore": "6059213806e442947666752f3db6bfdc",
+      ".lovable/meta.yaml": "d1f4edf35a22268edbfbdaca9f21c0f1",
+      ".lovable/sources.yaml": "9688e506ec30824ae59e1e814629067c",
+      ".lovable/system.md": "6037c2cdf2d2c66915feefcbc94c31cd",
+      "AGENTS.md": "ff5f33bf42b6f506fde72cce2a5bdd68",
+      "README.md": "d19675c449605f23c7cfa133c69b398b",
+      "bunfig.toml": "25f4c8696b22b0943db7191e0cdf7942",
+      "eslint.config.js": "07a67437fb1a45ab36d6de0145ff09de",
+      "lovable.toml": "b32568cbef680de9cbb176344986f1a3",
+      "mockupPreviewPlugin.ts": "70d01fe16b7ca25f16ff6bdb97f08b0b",
+      "package.json": "95106f1c79a013d9ba97099656ff1308",
+      "public/favicon.ico": "9f504444f85a5af2eef9264b02ae40be",
+      "roadmap.md": "d4e326cfd72a868e0ee7e2309ad8c937",
+      "src/assets/fonts/geist-bold.ttf": "f6466fe7a2b41bcc57bcabf57034b8cc",
+      "src/assets/fonts/geist-medium.ttf": "22b1e1fe5b0df7d61fd94e4c616c7927",
+      "src/assets/fonts/geist-regular.ttf": "19d889c7d3cc874914b8ae96cdd154c8",
+      "src/assets/fonts/geist-semibold.ttf": "07e116bd45adf2503f588943afcd83d9",
+      "src/assets/illustrations/pals-trio.png": "c9f42fb9d8b39fb30e6f6dfdc5c0fcfa",
+      "src/index.ts": "8d96af45cc266e4a4f973dcc11bd11c4",
+      "src/lib/utils.ts": "47180dd0863ccf4e7bb422634f0f85e9",
+      "src/mockup-preview.d.ts": "ae9d81e2b8514e13fd59b5b6bece9a64",
+      "src/pairwise/AgentStatusCard.tsx": "59fde60734738f73cf2c97630366efc6",
+      "src/pairwise/Avatar.tsx": "22fdcce1afe7032c434ec43854914ce1",
+      "src/pairwise/Badge.tsx": "707b0fa4047f6cd97abbd78cf0ddc4a9",
+      "src/pairwise/Button.tsx": "bddc9f15a6c86a23255a5cab7178fdb7",
+      "src/pairwise/Card.tsx": "afa0b650b5f95cc32ade6caf9a867782",
+      "src/pairwise/Icon.tsx": "3fa257e9e249d6ab94fa1f6143f6db80",
+      "src/pairwise/Input.tsx": "816610a0ecc57f4df1e6177e963c2ff4",
+      "src/pairwise/MatchResultCard.tsx": "b3d1559e11d633d07020012bb0fb62cd",
+      "src/pairwise/Progress.tsx": "81f300120594e53c987a1b540081ff24",
+      "src/pairwise/Skeleton.tsx": "bc4c4699597beb739a251ac4c4a68b58",
+      "src/pairwise/theme.css": "e6e0b9dd357df7828fd291f68d8ce3c5",
+      "src/pairwise/utils.ts": "aa5debcdc185bc5c6c1f0d0f5fcfabc1",
+      "src/routeTree.gen.ts": "b1f7669c7a73b912dc4c3c5f8631a31f",
+      "src/router.tsx": "8f905e713b0eba7fa8148b7995a708c9",
+      "src/routes/[__component].preview.$.tsx": "e4bf310e591541d31abf0cfeeb1121a4",
+      "src/routes/[__mockup].preview.$.tsx": "5d9f42470848aa60148f20f9580e240e",
+      "src/routes/__root.tsx": "e1368a33ec67848b6753589631ccaf35",
+      "src/routes/colors.tsx": "dfa72cc8af0552025410913cbab9fca3",
+      "src/routes/components.tsx": "311513dccbdd68649a0eb83c73686e50",
+      "src/routes/guidelines.tsx": "7868ab730f4d105907d226d0a83d6ed0",
+      "src/routes/iconography.tsx": "c81301fa7500bd4e42989e782b51aa4b",
+      "src/routes/index.tsx": "157222973c645b2ff32d380b43a4e950",
+      "src/routes/pals.tsx": "4522c86460af7816d9a2c1b0b832ee22",
+      "src/routes/typography.tsx": "90149c2e04e2d0ddae0ee144f027a413",
+      "src/showcase/Components.tsx": "b81dd700536ab85e8eb25ecdda7bf36d",
+      "src/showcase/Foundations.tsx": "246f0c76652b6ca4d159a7e7c25fea25",
+      "src/showcase/Overview.tsx": "d7c4030e58fcaa4dba0fb79236d098b2",
+      "src/showcase/Shell.tsx": "39d73ec1f31edfedf9542fff97977228",
+      "src/showcase/data.ts": "2ee83446cde1571fa15731c2f0f5e5ea",
+      "src/showcase/showcase.css": "b444708cd84af6964f061ad5bc7a6023",
+      "src/styles.css": "a2cfee68a74b9d27acf33e25fce40dca",
+      "tsconfig.json": "994abf64c2b9f78b568879f80ed0170e",
+      "vite.config.ts": "a99d983076495f848761d0f97f17062a",
+      "wrangler.jsonc": "680b897d48e44bcc65fe437c29b38f3b"
+    },
+    "pipeline_version": 8
+  },
+  "tokens": {
+    "color": [
+      {
+        "name": "--brand-pink",
+        "raw": "#FF6B81",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--brand-peach",
+        "raw": "#FF8A65",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--brand-yellow",
+        "raw": "#FFD166",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--brand-lavender",
+        "raw": "#A78BFA",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--brand-blue",
+        "raw": "#60A5FA",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--brand-aqua",
+        "raw": "#22D3EE",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--pal-pink",
+        "raw": "#FF8FB1",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--pal-blue",
+        "raw": "#79C5F5",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--pal-yellow",
+        "raw": "#FFD166",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--background",
+        "raw": "#F8F7FF",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--surface",
+        "raw": "#FFFFFF",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--border",
+        "raw": "#E9E5F4",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--success",
+        "raw": "#16856B",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--warning",
+        "raw": "#A96712",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--error",
+        "raw": "#C83D56",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--info",
+        "raw": "#3979C6",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--pink-soft",
+        "raw": "#FFF0F3",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--lavender-soft",
+        "raw": "#F0EBFF",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--blue-soft",
+        "raw": "#EDF6FF",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--yellow-soft",
+        "raw": "#FFF8E5",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--success-soft",
+        "raw": "#E7F6EF",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--error-soft",
+        "raw": "#FFF0F3",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--warning-soft",
+        "raw": "#FFF5DF",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--surface-muted",
+        "raw": "#F3F1F9",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--primary-ink",
+        "raw": "#632536",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--focus",
+        "raw": "#7443C4",
+        "source": "src/pairwise/theme.css"
+      }
+    ],
+    "spacing": [
+      {
+        "name": "--space-1",
+        "raw": "4px",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--space-2",
+        "raw": "8px",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--space-3",
+        "raw": "12px",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--space-4",
+        "raw": "16px",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--space-6",
+        "raw": "24px",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--space-8",
+        "raw": "32px",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--space-12",
+        "raw": "48px",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--space-16",
+        "raw": "64px",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--border-width",
+        "raw": "1px",
+        "source": "src/pairwise/theme.css"
+      }
+    ],
+    "typography": [
+      {
+        "name": "--text-primary",
+        "raw": "#1F1D2E",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--text-secondary-dark",
+        "raw": "#2D2A4A",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--text-muted",
+        "raw": "#77758D",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--text-readable",
+        "raw": "#666279",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--font-sans",
+        "raw": "Geist,system-ui,sans-serif",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--font-mono",
+        "raw": "ui-monospace,SFMono-Regular,monospace",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--text-hero",
+        "raw": "48px",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--text-page",
+        "raw": "32px",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--text-section",
+        "raw": "24px",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--text-card",
+        "raw": "18px",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--text-body",
+        "raw": "16px",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--text-small",
+        "raw": "14px",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--text-meta",
+        "raw": "12px",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--leading-body",
+        "raw": "1.6",
+        "source": "src/pairwise/theme.css"
+      }
+    ],
+    "radius": [
+      {
+        "name": "--radius-sm",
+        "raw": "12px",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--radius-md",
+        "raw": "16px",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--radius-lg",
+        "raw": "24px",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--radius-xl",
+        "raw": "32px",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--radius-full",
+        "raw": "999px",
+        "source": "src/pairwise/theme.css"
+      }
+    ],
+    "shadow": [
+      {
+        "name": "--shadow-subtle",
+        "raw": "0 2px 6px rgba(55,39,90,.05)",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--shadow-card",
+        "raw": "0 8px 24px rgba(75,53,120,.08)",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--shadow-floating",
+        "raw": "0 12px 32px rgba(75,53,120,.12)",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--shadow-button",
+        "raw": "0 5px 12px rgba(255,107,129,.24)",
+        "source": "src/pairwise/theme.css"
+      }
+    ],
+    "other": [
+      {
+        "name": "--gradient-love",
+        "raw": "linear-gradient(110deg,var(--brand-pink),var(--brand-peach))",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--gradient-agent",
+        "raw": "linear-gradient(110deg,var(--brand-lavender),var(--brand-blue))",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--gradient-discovery",
+        "raw": "linear-gradient(110deg,var(--brand-yellow),var(--pal-pink),var(--brand-lavender))",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--weight-regular",
+        "raw": "400",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--weight-medium",
+        "raw": "500",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--weight-semibold",
+        "raw": "600",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--weight-bold",
+        "raw": "700",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--leading-tight",
+        "raw": "1.2",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--motion-fast",
+        "raw": "150ms",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--motion-normal",
+        "raw": "220ms",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--control-height",
+        "raw": "48px",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--control-small",
+        "raw": "40px",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--control-large",
+        "raw": "52px",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--sidebar-width",
+        "raw": "248px",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--content-width",
+        "raw": "1280px",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--icon-small",
+        "raw": "16px",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--icon-medium",
+        "raw": "20px",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--icon-large",
+        "raw": "24px",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--avatar-small",
+        "raw": "32px",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--avatar-medium",
+        "raw": "48px",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--avatar-large",
+        "raw": "64px",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--focus-width",
+        "raw": "3px",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--focus-offset",
+        "raw": "3px",
+        "source": "src/pairwise/theme.css"
+      },
+      {
+        "name": "--opacity-disabled",
+        "raw": ".45",
+        "source": "src/pairwise/theme.css"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Button",
+      "file": "src/pairwise/Button",
+      "import_path": "",
+      "props": [
+        {
+          "name": "variant",
+          "type": "enum",
+          "values": [
+            "primary",
+            "secondary",
+            "agent",
+            "ghost",
+            "danger"
+          ],
+          "default": "primary"
+        },
+        {
+          "name": "size",
+          "type": "enum",
+          "values": [
+            "sm",
+            "md",
+            "lg",
+            "icon"
+          ],
+          "default": "md"
+        },
+        {
+          "name": "loading",
+          "type": "boolean",
+          "default": "false"
+        }
+      ],
+      "usage": "Use for deliberate user actions, with one primary action per screen.",
+      "examples": [
+        {
+          "label": "Typical usage",
+          "code": "\u003cButton variant=\"primary\"\u003e\u003cIcon name=\"heart\" /\u003eFind a match\u003c/Button\u003e"
+        }
+      ],
+      "antipatterns": [
+        "Do not use multiple primary actions at equal prominence.",
+        "Icon-only actions must have an accessible name."
+      ]
+    },
+    {
+      "name": "Badge",
+      "file": "src/pairwise/Badge",
+      "import_path": "",
+      "props": [
+        {
+          "name": "status",
+          "type": "enum",
+          "values": [
+            "pending",
+            "running",
+            "completed",
+            "partial",
+            "failed",
+            "insufficient"
+          ],
+          "default": "pending"
+        }
+      ],
+      "usage": "Summarize a processing state with readable text and a symbol.",
+      "examples": [
+        {
+          "label": "Typical usage",
+          "code": "\u003cBadge status=\"partial\"\u003ePartial evidence\u003c/Badge\u003e"
+        }
+      ],
+      "antipatterns": [
+        "Do not convey status through color alone."
+      ]
+    },
+    {
+      "name": "Input",
+      "file": "src/pairwise/Input",
+      "import_path": "",
+      "props": [
+        {
+          "name": "label",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "hint",
+          "type": "string"
+        },
+        {
+          "name": "error",
+          "type": "string"
+        }
+      ],
+      "usage": "Use labeled source fields with platform-specific hints and errors.",
+      "examples": [
+        {
+          "label": "Typical usage",
+          "code": "\u003cInput label=\"LinkedIn profile URL\" type=\"url\" hint=\"Public profiles only.\" /\u003e"
+        }
+      ],
+      "antipatterns": [
+        "Do not rely on placeholder text instead of a label."
+      ]
+    },
+    {
+      "name": "Card",
+      "file": "src/pairwise/Card",
+      "import_path": "",
+      "props": [
+        {
+          "name": "variant",
+          "type": "enum",
+          "values": [
+            "flat",
+            "raised",
+            "soft"
+          ],
+          "default": "flat"
+        }
+      ],
+      "usage": "Frame a repeated content item with gentle depth.",
+      "examples": [
+        {
+          "label": "Typical usage",
+          "code": "\u003cCard variant=\"raised\"\u003e\u003ch3\u003eShared interests\u003c/h3\u003e\u003cp\u003eHiking and cinema\u003c/p\u003e\u003c/Card\u003e"
+        }
+      ],
+      "antipatterns": [
+        "Do not nest cards or frame entire page sections."
+      ]
+    },
+    {
+      "name": "Avatar",
+      "file": "src/pairwise/Avatar",
+      "import_path": "",
+      "props": [
+        {
+          "name": "name",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "src",
+          "type": "string"
+        },
+        {
+          "name": "tone",
+          "type": "enum",
+          "values": [
+            "pink",
+            "blue",
+            "yellow"
+          ],
+          "default": "pink"
+        },
+        {
+          "name": "size",
+          "type": "enum",
+          "values": [
+            "sm",
+            "md",
+            "lg"
+          ],
+          "default": "md"
+        }
+      ],
+      "usage": "Identify a participant with initials or an image.",
+      "examples": [
+        {
+          "label": "Typical usage",
+          "code": "\u003cAvatar name=\"Alex Morgan\" tone=\"blue\" size=\"md\" /\u003e"
+        }
+      ],
+      "antipatterns": [
+        "Do not interpret role colors as compatibility scores."
+      ]
+    },
+    {
+      "name": "Progress",
+      "file": "src/pairwise/Progress",
+      "import_path": "",
+      "props": [
+        {
+          "name": "label",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "value",
+          "type": "number",
+          "required": true
+        }
+      ],
+      "usage": "Display measured work completion from real supplied state.",
+      "examples": [
+        {
+          "label": "Typical usage",
+          "code": "\u003cProgress label=\"Source analysis\" value={64} /\u003e"
+        }
+      ],
+      "antipatterns": [
+        "Do not simulate backend progress with a timer."
+      ]
+    },
+    {
+      "name": "AgentStatusCard",
+      "file": "src/pairwise/AgentStatusCard",
+      "import_path": "",
+      "props": [
+        {
+          "name": "name",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "activity",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "status",
+          "type": "any",
+          "required": true
+        },
+        {
+          "name": "progress",
+          "type": "number"
+        },
+        {
+          "name": "tone",
+          "type": "enum",
+          "values": [
+            "pink",
+            "blue",
+            "yellow"
+          ],
+          "default": "blue"
+        }
+      ],
+      "usage": "Summarize agent identity, current activity, and real state.",
+      "examples": [
+        {
+          "label": "Typical usage",
+          "code": "\u003cAgentStatusCard name=\"Alex Morgan\" activity=\"Reviewing public interests.\" status=\"running\" progress={64} /\u003e"
+        }
+      ],
+      "antipatterns": [
+        "Do not imply that saved example states are executing live."
+      ]
+    },
+    {
+      "name": "MatchResultCard",
+      "file": "src/pairwise/MatchResultCard",
+      "import_path": "",
+      "props": [
+        {
+          "name": "name",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "subtitle",
+          "type": "string"
+        },
+        {
+          "name": "score",
+          "type": "number"
+        },
+        {
+          "name": "coverage",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "confidence",
+          "type": "enum",
+          "values": [
+            "Low",
+            "Medium",
+            "High"
+          ],
+          "required": true
+        },
+        {
+          "name": "interests",
+          "type": "any",
+          "required": true
+        },
+        {
+          "name": "conflicts",
+          "type": "any",
+          "required": true
+        },
+        {
+          "name": "explanation",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "conversationHref",
+          "type": "string"
+        }
+      ],
+      "usage": "Present explainable compatibility with supporting and conflicting evidence.",
+      "examples": [
+        {
+          "label": "Typical usage",
+          "code": "\u003cMatchResultCard name=\"Sofia Chen\" score={86} coverage=\"Both sources\" confidence=\"Medium\" interests={[\"Hiking\"]} conflicts={[\"Different weekend schedules\"]} explanation=\"Shared interests emerged in conversation.\" /\u003e"
+        }
+      ],
+      "antipatterns": [
+        "Never supply a score without evidence context.",
+        "Do not treat missing evidence as a negative signal."
+      ]
+    },
+    {
+      "name": "Skeleton",
+      "file": "src/pairwise/Skeleton",
+      "import_path": "",
+      "props": [
+        {
+          "name": "variant",
+          "type": "enum",
+          "values": [
+            "block",
+            "text",
+            "avatar"
+          ],
+          "default": "block"
+        }
+      ],
+      "usage": "Reserve stable space while a profile loads.",
+      "examples": [
+        {
+          "label": "Typical usage",
+          "code": "\u003cdiv role=\"status\" aria-label=\"Loading profile\"\u003e\u003cSkeleton variant=\"avatar\" /\u003e\u003cSkeleton variant=\"text\" /\u003e\u003c/div\u003e"
+        }
+      ],
+      "antipatterns": [
+        "Do not present indefinite skeletons instead of an actionable error."
+      ]
+    },
+    {
+      "name": "Icon",
+      "file": "src/pairwise/Icon",
+      "import_path": "",
+      "props": [
+        {
+          "name": "name",
+          "type": "enum",
+          "values": [
+            "heart",
+            "sparkles",
+            "arrowRight",
+            "arrowUpRight",
+            "check",
+            "completed",
+            "alert",
+            "clock",
+            "search",
+            "link",
+            "users",
+            "conversation",
+            "activity",
+            "star",
+            "close",
+            "loading",
+            "palette",
+            "typography",
+            "grid",
+            "shapes",
+            "book",
+            "chevronRight",
+            "chevronDown",
+            "copy",
+            "menu",
+            "code",
+            "external",
+            "layers",
+            "wand"
+          ],
+          "required": true
+        },
+        {
+          "name": "size",
+          "type": "enum",
+          "values": [
+            "sm",
+            "md",
+            "lg"
+          ],
+          "default": "md"
+        }
+      ],
+      "usage": "Use the curated symbols at standard sizes; label meaningful standalone icons.",
+      "examples": [
+        {
+          "label": "Typical usage",
+          "code": "\u003cIcon name=\"conversation\" size=\"md\" /\u003e"
+        }
+      ],
+      "antipatterns": [
+        "Icon-only buttons still require an accessible name."
+      ]
+    }
+  ],
+  "assets": [
+    {
+      "file": "src/assets/fonts/geist-bold.ttf",
+      "kind": "font",
+      "format": "ttf"
+    },
+    {
+      "file": "src/assets/fonts/geist-medium.ttf",
+      "kind": "font",
+      "format": "ttf"
+    },
+    {
+      "file": "src/assets/fonts/geist-regular.ttf",
+      "kind": "font",
+      "format": "ttf"
+    },
+    {
+      "file": "src/assets/fonts/geist-semibold.ttf",
+      "kind": "font",
+      "format": "ttf"
+    },
+    {
+      "file": "src/assets/illustrations/pals-trio.png",
+      "kind": "illustration",
+      "format": "png"
+    }
+  ]
+}

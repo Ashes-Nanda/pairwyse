@@ -1,0 +1,7 @@
+import { forwardRef, type SVGProps } from 'react';
+import { Heart, Sparkles, ArrowRight, ArrowUpRight, Check, CheckCircle2, AlertCircle, Clock3, Search, Link2, Users, MessageCircle, Activity, Star, X, LoaderCircle, Palette, Type, LayoutGrid, Shapes, BookOpen, ChevronRight, ChevronDown, Copy, Menu, Code2, ExternalLink, Layers, WandSparkles } from 'lucide-react';
+import { cn } from './utils';
+export const iconMap = { heart:Heart, sparkles:Sparkles, arrowRight:ArrowRight, arrowUpRight:ArrowUpRight, check:Check, completed:CheckCircle2, alert:AlertCircle, clock:Clock3, search:Search, link:Link2, users:Users, conversation:MessageCircle, activity:Activity, star:Star, close:X, loading:LoaderCircle, palette:Palette, typography:Type, grid:LayoutGrid, shapes:Shapes, book:BookOpen, chevronRight:ChevronRight, chevronDown:ChevronDown, copy:Copy, menu:Menu, code:Code2, external:ExternalLink, layers:Layers, wand:WandSparkles };
+export interface IconProps extends SVGProps<SVGSVGElement> { name: keyof typeof iconMap; size?: 'sm'|'md'|'lg'; }
+/** PAIRWISE's curated icon set. Decorative by default; label standalone meaningful icons. */
+export const Icon = forwardRef<SVGSVGElement,IconProps>(function Icon({name,size='md',className,...props},ref){ const Glyph=iconMap[name];return <Glyph ref={ref} aria-hidden={props['aria-label'] ? undefined : true} className={cn('pw-icon',`pw-icon--${size}`,className)} strokeWidth={1.7} {...props}/>; });
