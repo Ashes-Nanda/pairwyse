@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as JoinRouteImport } from './routes/join'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ParticipantsIdRouteImport } from './routes/participants.$id'
 import { Route as SessionsIdRouteImport } from './routes/sessions.$id'
 import { Route as Char91__componentChar93PreviewSplatRouteImport } from './routes/[__component].preview.$'
@@ -24,6 +25,11 @@ const IndexRoute = IndexRouteImport.update({
 const JoinRoute = JoinRouteImport.update({
   id: '/join',
   path: '/join',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ParticipantsIdRoute = ParticipantsIdRouteImport.update({
@@ -52,6 +58,7 @@ const Char91__mockupChar93PreviewSplatRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/join': typeof JoinRoute
+  '/privacy': typeof PrivacyRoute
   '/participants/$id': typeof ParticipantsIdRoute
   '/sessions/$id': typeof SessionsIdRoute
   '/__component/preview/$': typeof Char91__componentChar93PreviewSplatRoute
@@ -60,6 +67,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/join': typeof JoinRoute
+  '/privacy': typeof PrivacyRoute
   '/participants/$id': typeof ParticipantsIdRoute
   '/sessions/$id': typeof SessionsIdRoute
   '/__component/preview/$': typeof Char91__componentChar93PreviewSplatRoute
@@ -69,6 +77,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/join': typeof JoinRoute
+  '/privacy': typeof PrivacyRoute
   '/participants/$id': typeof ParticipantsIdRoute
   '/sessions/$id': typeof SessionsIdRoute
   '/__component/preview/$': typeof Char91__componentChar93PreviewSplatRoute
@@ -79,6 +88,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/join'
+    | '/privacy'
     | '/participants/$id'
     | '/sessions/$id'
     | '/__component/preview/$'
@@ -87,6 +97,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/join'
+    | '/privacy'
     | '/participants/$id'
     | '/sessions/$id'
     | '/__component/preview/$'
@@ -95,6 +106,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/join'
+    | '/privacy'
     | '/participants/$id'
     | '/sessions/$id'
     | '/__component/preview/$'
@@ -104,6 +116,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   JoinRoute: typeof JoinRoute
+  PrivacyRoute: typeof PrivacyRoute
   ParticipantsIdRoute: typeof ParticipantsIdRoute
   SessionsIdRoute: typeof SessionsIdRoute
   Char91__componentChar93PreviewSplatRoute: typeof Char91__componentChar93PreviewSplatRoute
@@ -124,6 +137,13 @@ declare module '@tanstack/react-router' {
       path: '/join'
       fullPath: '/join'
       preLoaderRoute: typeof JoinRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/participants/$id': {
@@ -160,6 +180,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   JoinRoute: JoinRoute,
+  PrivacyRoute: PrivacyRoute,
   ParticipantsIdRoute: ParticipantsIdRoute,
   SessionsIdRoute: SessionsIdRoute,
   Char91__componentChar93PreviewSplatRoute:
