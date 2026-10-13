@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { computeScore, rankCandidates, validateInstagramUrl, validateLinkedInUrl, type Rubric } from "./ranking";
+import { computeScore, matchCoverage, rankCandidates, validateInstagramUrl, validateLinkedInUrl, type Coverage, type Rubric } from "./ranking";
 
 function requirePasscode(passcode: string | undefined) {
   const expected = process.env["INTAKE_PASSCODE"];
@@ -35,11 +35,12 @@ export const listParticipants = createServerFn({ method: "GET" }).handler(async 
     .from("participants")
     .select("id, display_name, status, error, is_demo, created_at, profiles_analysis(coverage, summary)")
     .eq("consent_confirmed", true)
+    .eq("is_test", false)
     .order("created_at", { ascending: true });
   if (error) throw new Error(error.message);
   const [{ count: sessions }, { count: evals }] = await Promise.all([
-    db.from("date_sessions").select("id", { count: "exact", head: true }).eq("status", "completed"),
-    db.from("evaluations").select("id", { count: "exact", head: true }),
+    db.from("date_sessions").select("id, a:participants!date_sessions_participant_a_fkey!inner(is_test)", { count: "exact", head: true }).eq("status", "completed").eq("a.is_test", false),
+    db.from("evaluations").select("id, e:participants!evaluations_evaluator_id_fkey!inner(is_test)", { count: "exact", head: true }).eq("e.is_test", false),
   ]);
   return { participants: data ?? [], completedSessions: sessions ?? 0, completedEvaluations: evals ?? 0 };
 });
@@ -50,7 +51,7 @@ export const getParticipant = createServerFn({ method: "GET" })
     const db = await admin();
     const { data: p, error } = await db
       .from("participants")
-      .select("id, display_name, linkedin_url, instagram_url, status, error, is_demo, consent_at, created_at")
+      .select("id, display_name, linkedin_url, instagram_url, status, error, is_demo, is_test, consent_at, created_at")
       .eq("id", data.id)
       .eq("consent_confirmed", true)
       .maybeSingle();
@@ -58,17 +59,23 @@ export const getParticipant = createServerFn({ method: "GET" })
     if (!p) return null;
     const [{ data: sources }, { data: profile }, { data: sessions }, { data: evals }, { data: others }] = await Promise.all([
       db.from("source_records").select("source, source_url, actor_id, actor_run_id, status, error, normalized, started_at, finished_at").eq("participant_id", data.id),
-      db.from("profiles_analysis").select("summary, data, coverage, model, created_at").eq("participant_id", data.id).maybeSingle(),
+      db.from("profiles_analysis").select("summary, data, coverage, model, created_at, input_hash").eq("participant_id", data.id).maybeSingle(),
       db.from("date_sessions").select("id, participant_a, participant_b, status, error, created_at").or(`participant_a.eq.${data.id},participant_b.eq.${data.id}`),
-      db.from("evaluations").select("session_id, candidate_id, score, confidence, explanation, shared_interests, conflicts, unknowns, rubric").eq("evaluator_id", data.id),
-      db.from("participants").select("id, display_name, status").eq("consent_confirmed", true).neq("id", data.id),
+      db.from("evaluations").select("session_id, candidate_id, score, confidence, explanation, shared_interests, conflicts, unknowns, rubric, criteria_evidence").eq("evaluator_id", data.id),
+      db.from("participants").select("id, display_name, status, profiles_analysis(coverage)").eq("consent_confirmed", true).eq("is_test", p.is_test).neq("id", data.id),
     ]);
     const names = Object.fromEntries((others ?? []).map((o) => [o.id, o.display_name]));
+    const covOf = Object.fromEntries((others ?? []).map((o) => [o.id, ((o as any).profiles_analysis?.coverage ?? null) as Coverage | null]));
     const ranking = rankCandidates(
-      (evals ?? []).map((e) => ({ ...e, candidate_id: e.candidate_id, score: e.score === null ? null : Number(e.score), confidence: e.confidence as "low" | "medium" | "high", candidate_name: names[e.candidate_id] ?? "Unknown" })),
+      (evals ?? []).map((e) => ({ ...e, candidate_id: e.candidate_id, score: e.score === null ? null : Number(e.score), confidence: e.confidence as "low" | "medium" | "high", candidate_name: names[e.candidate_id] ?? "Unknown", match_coverage: matchCoverage((profile?.coverage ?? null) as Coverage | null, covOf[e.candidate_id]) })),
     );
     const datedIds = new Set((sessions ?? []).map((s) => (s.participant_a === data.id ? s.participant_b : s.participant_a)));
+    const usable = (sources ?? []).filter((s) => s.status === "completed" && s.normalized).map((s) => ({ source: s.source, normalized: s.normalized }));
+    const { hashInputs } = await import("./analysis");
+    const currentHash = usable.length ? await hashInputs(usable) : null;
+    const profileFreshness = !profile ? "none" : profile.input_hash === null ? "legacy" : profile.input_hash === currentHash ? "current" : "stale";
     return {
+      profileFreshness,
       participant: p,
       sources: sources ?? [],
       profile,
@@ -87,7 +94,7 @@ export const getSession = createServerFn({ method: "GET" })
     if (!s) return null;
     const [{ data: msgs }, { data: evals }, { data: people }] = await Promise.all([
       db.from("date_messages").select("turn, speaker_id, content, created_at").eq("session_id", data.id).order("turn"),
-      db.from("evaluations").select("evaluator_id, candidate_id, score, confidence, explanation, shared_interests, conflicts, unknowns, rubric").eq("session_id", data.id),
+      db.from("evaluations").select("evaluator_id, candidate_id, score, confidence, explanation, shared_interests, conflicts, unknowns, rubric, criteria_evidence").eq("session_id", data.id),
       db.from("participants").select("id, display_name, is_demo").in("id", [s.participant_a, s.participant_b]),
     ]);
     return { session: s, messages: msgs ?? [], evaluations: evals ?? [], people: people ?? [] };
@@ -230,31 +237,51 @@ const profileSchema = z.object({
 });
 
 export const analyzeProfile = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string; passcode: string }) => idPass.parse(d))
+  .inputValidator((d: { id: string; passcode: string; force?: boolean }) => withPass({ id: z.string().uuid(), force: z.boolean().optional() }).parse(d))
   .handler(async ({ data }) => {
     requirePasscode(data.passcode);
     const { generateStructured, AI_MODEL } = await import("./ai.server");
+    const { analyzeOnce, ANALYZABLE } = await import("./analysis");
     const db = await admin();
-    const { data: sources } = await db.from("source_records").select("source, source_url, status, normalized").eq("participant_id", data.id);
-    const usable = (sources ?? []).filter((s) => s.status === "completed" && s.normalized);
-    if (!usable.length) return { ok: false as const, error: "No successfully retrieved source data to analyse." };
-    await db.from("participants").update({ status: "analyzing" }).eq("id", data.id);
-    try {
-      const profile = await generateStructured({
+    const { data: pc } = await db.from("participants").select("consent_confirmed").eq("id", data.id).single();
+    if (!pc?.consent_confirmed) return { ok: false as const, error: "Consent not recorded; processing refused." };
+    return analyzeOnce(
+      data.id,
+      {
+        usableSources: async (id) => {
+          const { data: src } = await db.from("source_records").select("source, status, normalized").eq("participant_id", id);
+          return (src ?? []).filter((s) => s.status === "completed" && s.normalized).map((s) => ({ source: s.source, normalized: s.normalized }));
+        },
+        existingHash: async (id) => {
+          const { data: row } = await db.from("profiles_analysis").select("input_hash").eq("participant_id", id).maybeSingle();
+          return row ? row.input_hash : undefined;
+        },
+        claim: async (id, staleBefore) => {
+          const now = new Date().toISOString();
+          const { data: a } = await db.from("participants").update({ status: "analyzing", error: null, updated_at: now }).eq("id", id).in("status", [...ANALYZABLE]).select("id");
+          if (a?.length) return true;
+          const { data: b } = await db.from("participants").update({ status: "analyzing", error: null, updated_at: now }).eq("id", id).eq("status", "analyzing").lt("updated_at", staleBefore.toISOString()).select("id");
+          return !!b?.length;
+        },
+        save: async (id, profile, hash, coverage) => {
+          const pr = profile as z.infer<typeof profileSchema>;
+          const { error } = await db.from("profiles_analysis").upsert({ participant_id: id, summary: pr.summary, data: pr, coverage, model: AI_MODEL, input_hash: hash, created_at: new Date().toISOString() });
+          if (error) throw new Error(error.message);
+          await db.from("participants").update({ status: "profiled", error: null, updated_at: new Date().toISOString() }).eq("id", id);
+        },
+        fail: async (id, message) => {
+          await db.from("participants").update({ status: "analysis_failed", error: message, updated_at: new Date().toISOString() }).eq("id", id);
+        },
+      },
+      (usable) => generateStructured({
         name: "participant_profile",
         schema: profileSchema,
         instructions:
           "You are the PAIRWISE Profile Agent. Extract a dating-relevant profile ONLY from the supplied public source data. Every claim must cite a short verbatim quote from the data and its source. Never infer protected attributes (religion, ethnicity, health, sexuality, politics) or anything not supported by evidence. Only list stated_preferences if explicitly stated. Record what is unknown in uncertainties. Keep evidence concise.",
         prompt: `Sources (JSON):\n${JSON.stringify(usable).slice(0, 24000)}`,
-      });
-      const coverage = usable.length === 2 ? "full" : "partial";
-      await db.from("profiles_analysis").upsert({ participant_id: data.id, summary: profile.summary, data: profile, coverage, model: AI_MODEL, created_at: new Date().toISOString() });
-      await db.from("participants").update({ status: "profiled", error: null }).eq("id", data.id);
-      return { ok: true as const };
-    } catch (e) {
-      await db.from("participants").update({ status: "analysis_failed", error: (e as Error).message }).eq("id", data.id);
-      return { ok: false as const, error: (e as Error).message };
-    }
+      }),
+      { force: data.force },
+    );
   });
 
 // ---------- Dating sessions ----------
@@ -291,13 +318,16 @@ export const runNextTurn = createServerFn({ method: "POST" })
       db.from("participants").select("display_name").eq("id", other).single(),
     ]);
     const myProfile = (me as any)?.profiles_analysis;
-    const instructions = `You are the PAIRWISE dating agent representing ${me?.display_name}. You are on a first text-based "date" with the agent for ${them?.display_name}.
+    const { buildDatingInstructions, composeTurn } = await import("./prompts");
+    const instructions = buildDatingInstructions({ me: me?.display_name ?? "", them: them?.display_name ?? "", profileJson: JSON.stringify(myProfile?.data ?? {}), turn, turnsPlanned: s.turns_planned });
+    const _legacy = `You are the PAIRWISE dating agent representing ${me?.display_name}. You are on a first text-based "date" with the agent for ${them?.display_name}.
 Speak in first person as ${me?.display_name}'s representative, warm and curious. Use ONLY facts from this evidence-backed profile; if asked something not covered, say you're not sure / it isn't in your profile. Never invent experiences, never claim protected attributes. Ask genuine questions to discover compatibility. Keep each message 1-3 sentences.${turn >= s.turns_planned - 2 ? " The date is ending: wrap up naturally." : ""}
 Profile: ${JSON.stringify(myProfile?.data ?? {}).slice(0, 8000)}`;
     const history = (msgs ?? []).map((m) => ({ role: (m.speaker_id === speaker ? "assistant" : "user") as "assistant" | "user", content: m.content }));
     if (!history.length) history.push({ role: "user", content: `(The date begins. Introduce yourself to ${them?.display_name}'s agent.)` });
     try {
-      const reply = await generateTextReply(instructions, history);
+      void _legacy;
+      const { text: reply } = await composeTurn(generateTextReply, instructions, history, (c) => ({ role: "user" as const, content: c }), (c) => ({ role: "assistant" as const, content: c }));
       const { error } = await db.from("date_messages").insert({ session_id: s.id, turn, speaker_id: speaker, content: reply });
       if (error && error.code !== "23505") throw new Error(error.message);
       const done = turn + 1 >= s.turns_planned;
@@ -309,13 +339,14 @@ Profile: ${JSON.stringify(myProfile?.data ?? {}).slice(0, 8000)}`;
     }
   });
 
+const criterion = z.object({ score: z.number().nullable(), reason: z.string(), evidence_refs: z.array(z.string()) });
 const evalSchema = z.object({
-  rubric: z.object({
-    shared_interests: z.number().nullable(),
-    values_alignment: z.number().nullable(),
-    conversation_quality: z.number().nullable(),
-    lifestyle_compatibility: z.number().nullable(),
-    stated_preferences_fit: z.number().nullable(),
+  criteria: z.object({
+    shared_interests: criterion,
+    values_alignment: criterion,
+    conversation_quality: criterion,
+    lifestyle_compatibility: criterion,
+    stated_preferences_fit: criterion,
   }),
   confidence: z.enum(["low", "medium", "high"]),
   explanation: z.string(),
@@ -336,21 +367,25 @@ export const evaluateSession = createServerFn({ method: "POST" })
     if ((msgs ?? []).length < s.turns_planned) return { ok: false as const, error: "Conversation not finished yet." };
     const { data: people } = await db.from("participants").select("id, display_name, profiles_analysis(data, coverage)").in("id", [s.participant_a, s.participant_b]);
     const byId = Object.fromEntries((people ?? []).map((p: any) => [p.id, p]));
-    const transcript = msgs!.map((m) => `${byId[m.speaker_id]?.display_name}: ${m.content}`).join("\n");
+    const transcript = msgs!.map((m) => `[M${m.turn}] ${byId[m.speaker_id]?.display_name}: ${m.content}`).join("\n");
+    const { buildEvidenceIndex, describeIndex, validateCriteria } = await import("./evidence");
     try {
       for (const [evaluator, candidate] of [[s.participant_a, s.participant_b], [s.participant_b, s.participant_a]] as const) {
         const ev = byId[evaluator];
         const ca = byId[candidate];
+        const idx = buildEvidenceIndex(ev.profiles_analysis?.data, ca.profiles_analysis?.data, msgs!);
         const out = await generateStructured({
           name: "directional_evaluation",
           schema: evalSchema,
           instructions:
-            "You are the PAIRWISE Match Evaluator. Assess compatibility FROM THE EVALUATOR'S PERSPECTIVE (directional). Rate each rubric criterion 0-5 using only the profiles' evidence and the transcript; use null when there is not enough evidence. Missing data is not a negative signal. Set confidence low if evidence is thin. Do not claim to predict relationship success.",
-          prompt: `Evaluator: ${ev.display_name}\nEvaluator profile: ${JSON.stringify(ev.profiles_analysis?.data).slice(0, 7000)}\n\nCandidate: ${ca.display_name}\nCandidate profile: ${JSON.stringify(ca.profiles_analysis?.data).slice(0, 7000)}\n\nTranscript:\n${transcript}`,
+            "You are the PAIRWISE Match Evaluator. Assess compatibility FROM THE EVALUATOR'S PERSPECTIVE (directional). Rate each rubric criterion 0-5 using only the profiles' evidence and the transcript; use null when there is not enough evidence. For each criterion give a one-sentence reason and cite evidence_refs using ONLY ids from the supplied reference list (E.* = evaluator claim, C.* = candidate claim, M<n> = message); use an empty list if nothing supports it. Missing data is not a negative signal. Set confidence low if evidence is thin. Do not claim to predict relationship success.",
+          prompt: `Evaluator: ${ev.display_name}\nEvaluator profile: ${JSON.stringify(ev.profiles_analysis?.data).slice(0, 7000)}\n\nCandidate: ${ca.display_name}\nCandidate profile: ${JSON.stringify(ca.profiles_analysis?.data).slice(0, 7000)}\n\nTranscript:\n${transcript}\n\nCitable references:\n${describeIndex(idx)}`,
         });
-        const score = computeScore(out.rubric as Rubric, out.confidence);
+        const criteria = validateCriteria(out.criteria, idx);
+        const rubric = Object.fromEntries(Object.entries(criteria).map(([k, v]) => [k, v.score])) as Rubric;
+        const score = computeScore(rubric, out.confidence);
         await db.from("evaluations").upsert(
-          { session_id: s.id, evaluator_id: evaluator, candidate_id: candidate, rubric: out.rubric, score, confidence: out.confidence, explanation: out.explanation, shared_interests: out.shared_interests, conflicts: out.conflicts, unknowns: out.unknowns, model: AI_MODEL },
+          { session_id: s.id, evaluator_id: evaluator, candidate_id: candidate, rubric, criteria_evidence: criteria, score, confidence: out.confidence, explanation: out.explanation, shared_interests: out.shared_interests, conflicts: out.conflicts, unknowns: out.unknowns, model: AI_MODEL },
           { onConflict: "session_id,evaluator_id" },
         );
       }
