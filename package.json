@@ -1,11 +1,13 @@
 {
   "dependencies": {
+    "@ai-sdk/openai": "^4.0.92",
     "@cloudflare/vite-plugin": "^1.25.5",
     "@supabase/supabase-js": "^2.117.3",
     "@tanstack/react-query": "^5.101.1",
-    "@tanstack/react-router": "^1.170.16",
-    "@tanstack/react-start": "^1.168.26",
-    "@tanstack/router-plugin": "^1.168.18",
+    "@tanstack/react-router": "1.170.41",
+    "@tanstack/react-start": "1.168.60",
+    "@tanstack/router-plugin": "1.168.42",
+    "ai": "^7.0.138",
     "date-fns": "^4.1.0",
     "lucide-react": "1.56.0",
     "react": "^19.2.0",
@@ -30,7 +32,8 @@
     "postgres": "^3.4.9",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.56.1",
-    "vite": "^8.0.16"
+    "vite": "^8.0.16",
+    "vitest": "^5.0.4"
   },
   "name": "custom_design_system_tanstack",
   "private": true,

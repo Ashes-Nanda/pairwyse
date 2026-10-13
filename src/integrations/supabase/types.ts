@@ -14,7 +14,308 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      date_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          session_id: string
+          speaker_id: string
+          turn: number
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          session_id: string
+          speaker_id: string
+          turn: number
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          session_id?: string
+          speaker_id?: string
+          turn?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "date_messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "date_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "date_messages_speaker_id_fkey"
+            columns: ["speaker_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      date_sessions: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          error: string | null
+          id: string
+          model: string | null
+          participant_a: string
+          participant_b: string
+          status: string
+          turns_planned: number
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          model?: string | null
+          participant_a: string
+          participant_b: string
+          status?: string
+          turns_planned?: number
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          model?: string | null
+          participant_a?: string
+          participant_b?: string
+          status?: string
+          turns_planned?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "date_sessions_participant_a_fkey"
+            columns: ["participant_a"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "date_sessions_participant_b_fkey"
+            columns: ["participant_b"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      evaluations: {
+        Row: {
+          candidate_id: string
+          confidence: string
+          conflicts: Json
+          created_at: string
+          evaluator_id: string
+          explanation: string
+          id: string
+          model: string
+          rubric: Json
+          score: number | null
+          session_id: string
+          shared_interests: Json
+          unknowns: Json
+        }
+        Insert: {
+          candidate_id: string
+          confidence: string
+          conflicts?: Json
+          created_at?: string
+          evaluator_id: string
+          explanation: string
+          id?: string
+          model: string
+          rubric: Json
+          score?: number | null
+          session_id: string
+          shared_interests?: Json
+          unknowns?: Json
+        }
+        Update: {
+          candidate_id?: string
+          confidence?: string
+          conflicts?: Json
+          created_at?: string
+          evaluator_id?: string
+          explanation?: string
+          id?: string
+          model?: string
+          rubric?: Json
+          score?: number | null
+          session_id?: string
+          shared_interests?: Json
+          unknowns?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evaluations_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evaluations_evaluator_id_fkey"
+            columns: ["evaluator_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evaluations_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "date_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      participants: {
+        Row: {
+          consent_at: string | null
+          consent_confirmed: boolean
+          consent_statement: string | null
+          created_at: string
+          display_name: string
+          error: string | null
+          id: string
+          instagram_url: string
+          is_demo: boolean
+          linkedin_url: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          consent_at?: string | null
+          consent_confirmed?: boolean
+          consent_statement?: string | null
+          created_at?: string
+          display_name: string
+          error?: string | null
+          id?: string
+          instagram_url: string
+          is_demo?: boolean
+          linkedin_url: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          consent_at?: string | null
+          consent_confirmed?: boolean
+          consent_statement?: string | null
+          created_at?: string
+          display_name?: string
+          error?: string | null
+          id?: string
+          instagram_url?: string
+          is_demo?: boolean
+          linkedin_url?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles_analysis: {
+        Row: {
+          coverage: string
+          created_at: string
+          data: Json
+          model: string
+          participant_id: string
+          summary: string
+        }
+        Insert: {
+          coverage: string
+          created_at?: string
+          data: Json
+          model: string
+          participant_id: string
+          summary: string
+        }
+        Update: {
+          coverage?: string
+          created_at?: string
+          data?: Json
+          model?: string
+          participant_id?: string
+          summary?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_analysis_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: true
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      source_records: {
+        Row: {
+          actor_id: string
+          actor_run_id: string | null
+          created_at: string
+          dataset_id: string | null
+          error: string | null
+          finished_at: string | null
+          id: string
+          normalized: Json | null
+          participant_id: string
+          raw: Json | null
+          source: string
+          source_url: string
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          actor_id: string
+          actor_run_id?: string | null
+          created_at?: string
+          dataset_id?: string | null
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          normalized?: Json | null
+          participant_id: string
+          raw?: Json | null
+          source: string
+          source_url: string
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          actor_id?: string
+          actor_run_id?: string | null
+          created_at?: string
+          dataset_id?: string | null
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          normalized?: Json | null
+          participant_id?: string
+          raw?: Json | null
+          source?: string
+          source_url?: string
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "source_records_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
