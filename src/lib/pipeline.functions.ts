@@ -310,7 +310,11 @@ export const runNextTurn = createServerFn({ method: "POST" })
     if (s.status === "completed" || s.status === "evaluating") return { done: true, status: s.status };
     const { data: msgs } = await db.from("date_messages").select("turn, speaker_id, content").eq("session_id", s.id).order("turn");
     const turn = (msgs ?? []).length;
-    if (turn >= s.turns_planned) return { done: true, status: s.status };
+    if (turn >= s.turns_planned) {
+      // Conversation already complete (e.g. evaluation failed earlier): hand over to evaluation, never add a 9th message.
+      if (s.status !== "evaluating") await db.from("date_sessions").update({ status: "evaluating", error: null }).eq("id", s.id);
+      return { done: true, status: "evaluating" };
+    }
     const speaker = turn % 2 === 0 ? s.participant_a : s.participant_b;
     const other = speaker === s.participant_a ? s.participant_b : s.participant_a;
     const [{ data: me }, { data: them }] = await Promise.all([

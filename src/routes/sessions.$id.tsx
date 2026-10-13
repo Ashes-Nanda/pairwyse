@@ -42,7 +42,12 @@ function SessionPage() {
   const s = data?.session;
   useEffect(() => {
     if (!s || !autoRun || working || !pass.passcode) return;
-    if (s.status === "running" && data.messages.length < s.turns_planned) {
+    if ((s.status === "running" || s.status === "failed") && data.messages.length < s.turns_planned) {
+      setWorking(true);
+      next({ data: { id, passcode: pass.passcode ?? "" } })
+        .catch((e) => { setErr(`${(e as Error).message} — saved messages are kept. Press Resume to retry this turn.`); setAutoRun(false); })
+        .finally(async () => { await qc.invalidateQueries({ queryKey: ["session", id] }); setWorking(false); });
+    } else if (s.status === "failed" && data.messages.length >= s.turns_planned) {
       setWorking(true);
       next({ data: { id, passcode: pass.passcode ?? "" } })
         .catch((e) => { setErr((e as Error).message); setAutoRun(false); })
