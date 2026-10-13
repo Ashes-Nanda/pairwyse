@@ -128,13 +128,13 @@ describe("dating prompt and reply checks", () => {
   const ctx = { me: "A", them: "B", profileJson: '{"interests":[]}', turn: 0, turnsPlanned: 8 };
   it("prompt forbids unsupported facts and formulaic disclaimers, asks open questions", () => {
     const p = buildDatingInstructions(ctx);
-    expect(p).toMatch(/Never state or guess age, relationship status, dating preferences, attraction/);
-    expect(p).toMatch(/open-ended question/);
-    expect(p).toMatch(/Avoid phrases like "my profile doesn't establish/);
+    expect(p).toMatch(/Never invent memories, anecdotes, trips, opinions-as-facts, age, relationship status, dating preferences, attraction/);
+    expect(p).toMatch(/make it specific/);
+    expect(p).toMatch(/never narrate what the profile does or doesn't say/);
     expect(p).not.toMatch(/say you're not sure \/ it isn't in your profile/); // old instruction that caused the defensive tone
   });
   it("closing turns don't manufacture a romantic outcome", () => {
-    expect(buildDatingInstructions({ ...ctx, turn: 7 })).toMatch(/without promising or implying a romantic outcome/);
+    expect(buildDatingInstructions({ ...ctx, turn: 7 })).toMatch(/Don't promise or imply a romantic outcome/);
   });
   it("detects defensive phrasing", () => {
     expect(isDefensive("My profile doesn't establish whether I like hiking, but…")).toBe(true);

@@ -67,7 +67,7 @@ export const getParticipant = createServerFn({ method: "GET" })
     const names = Object.fromEntries((others ?? []).map((o) => [o.id, o.display_name]));
     const covOf = Object.fromEntries((others ?? []).map((o) => [o.id, ((o as any).profiles_analysis?.coverage ?? null) as Coverage | null]));
     const ranking = rankCandidates(
-      (evals ?? []).map((e) => ({ ...e, candidate_id: e.candidate_id, score: e.score === null ? null : Number(e.score), confidence: e.confidence as "low" | "medium" | "high", candidate_name: names[e.candidate_id] ?? "Unknown", match_coverage: matchCoverage((profile?.coverage ?? null) as Coverage | null, covOf[e.candidate_id]) })),
+      (evals ?? []).filter((e) => e.candidate_id in names).map((e) => ({ ...e, candidate_id: e.candidate_id, score: e.score === null ? null : Number(e.score), confidence: e.confidence as "low" | "medium" | "high", candidate_name: names[e.candidate_id] ?? "Unknown", match_coverage: matchCoverage((profile?.coverage ?? null) as Coverage | null, covOf[e.candidate_id]) })),
     );
     const datedIds = new Set((sessions ?? []).map((s) => (s.participant_a === data.id ? s.participant_b : s.participant_a)));
     const usable = (sources ?? []).filter((s) => s.status === "completed" && s.normalized).map((s) => ({ source: s.source, normalized: s.normalized }));
@@ -95,7 +95,7 @@ export const getSession = createServerFn({ method: "GET" })
     const [{ data: msgs }, { data: evals }, { data: people }] = await Promise.all([
       db.from("date_messages").select("turn, speaker_id, content, created_at").eq("session_id", data.id).order("turn"),
       db.from("evaluations").select("evaluator_id, candidate_id, score, confidence, explanation, shared_interests, conflicts, unknowns, rubric, criteria_evidence").eq("session_id", data.id),
-      db.from("participants").select("id, display_name, is_demo, is_test").in("id", [s.participant_a, s.participant_b]),
+      db.from("participants").select("id, display_name, is_demo, is_test, profiles_analysis(data, coverage)").in("id", [s.participant_a, s.participant_b]),
     ]);
     return { session: s, messages: msgs ?? [], evaluations: evals ?? [], people: people ?? [] };
   });
@@ -291,8 +291,11 @@ export const createSession = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     requirePasscode(data.passcode);
     const db = await admin();
-    const { data: ps } = await db.from("participants").select("id, status").in("id", [data.a, data.b]);
+    const { data: ps } = await db.from("participants").select("id, status, is_test, consent_confirmed").in("id", [data.a, data.b]);
     if ((ps ?? []).length !== 2 || ps!.some((p) => p.status !== "profiled")) return { ok: false as const, error: "Both participants need a completed profile." };
+    if (ps!.some((p) => !p.consent_confirmed)) return { ok: false as const, error: "Consent not recorded; processing refused." };
+    // Shared database: synthetic fixtures may never be paired with real participants.
+    if (ps![0]!.is_test !== ps![1]!.is_test) return { ok: false as const, error: "Synthetic test fixtures can't be paired with real participants." };
     const { data: s, error } = await db.from("date_sessions").insert({ participant_a: data.a, participant_b: data.b, status: "running" }).select("id").single();
     if (error) return { ok: false as const, error: error.code === "23505" ? "These two have already dated." : error.message };
     return { ok: true as const, id: s.id };
@@ -327,7 +330,7 @@ export const runNextTurn = createServerFn({ method: "POST" })
     const history = (msgs ?? []).map((m) => ({ role: (m.speaker_id === speaker ? "assistant" : "user") as "assistant" | "user", content: m.content }));
     if (!history.length) history.push({ role: "user", content: `(The date begins. Introduce yourself to ${them?.display_name}'s agent.)` });
     try {
-      const { text: reply } = await composeTurn(generateTextReply, instructions, history, (c) => ({ role: "user" as const, content: c }), (c) => ({ role: "assistant" as const, content: c }));
+      const { text: reply } = await composeTurn(generateTextReply, instructions, history, (c) => ({ role: "user" as const, content: c }), (c) => ({ role: "assistant" as const, content: c }), (msgs ?? []).filter((m) => m.speaker_id === speaker).map((m) => m.content));
       const { error } = await db.from("date_messages").insert({ session_id: s.id, turn, speaker_id: speaker, content: reply });
       if (error && error.code !== "23505") throw new Error(error.message);
       const done = turn + 1 >= s.turns_planned;
@@ -408,4 +411,41 @@ export const deleteParticipant = createServerFn({ method: "POST" })
     const { error } = await db.from("participants").delete().eq("id", data.id);
     if (error) return { ok: false as const, error: error.message };
     return { ok: true as const };
+  });
+
+// ---------- Restricted operations summary ----------
+
+/** Passcode-gated pre-demo verification counts. Real (is_test=false) and synthetic counts are reported separately. */
+export const getOpsSummary = createServerFn({ method: "POST" })
+  .inputValidator((d: { passcode: string }) => z.object({ passcode: z.string().max(200) }).parse(d))
+  .handler(async ({ data }) => {
+    try { requirePasscode(data.passcode); } catch (e) { return { ok: false as const, error: (e as Error).message }; }
+    const db = await admin();
+    const { data: people } = await db.from("participants").select("id, status, is_demo, is_test, consent_confirmed");
+    const { data: sources } = await db.from("source_records").select("participant_id, source, status");
+    const { data: sessions } = await db.from("date_sessions").select("id, participant_a, status");
+    const { data: msgs } = await db.from("date_messages").select("session_id");
+    const { data: evals } = await db.from("evaluations").select("evaluator_id, score");
+    const testIds = new Set((people ?? []).filter((p) => p.is_test).map((p) => p.id));
+    const summarize = (isTest: boolean) => {
+      const ps = (people ?? []).filter((p) => p.is_test === isTest && p.consent_confirmed);
+      const ids = new Set(ps.map((p) => p.id));
+      const src = (sources ?? []).filter((s) => ids.has(s.participant_id));
+      const ses = (sessions ?? []).filter((s) => ids.has(s.participant_a));
+      const sesIds = new Set(ses.map((s) => s.id));
+      const ev = (evals ?? []).filter((e) => ids.has(e.evaluator_id));
+      const by = (src2: string, st: string) => src.filter((s) => s.source === src2 && s.status === st).length;
+      return {
+        participants: ps.length,
+        demo: ps.filter((p) => p.is_demo).length,
+        profiled: ps.filter((p) => p.status === "profiled").length,
+        analysisFailed: ps.filter((p) => p.status === "analysis_failed").length,
+        linkedin: { completed: by("linkedin", "completed"), failed: by("linkedin", "failed"), running: by("linkedin", "running") },
+        instagram: { completed: by("instagram", "completed"), failed: by("instagram", "failed"), running: by("instagram", "running") },
+        sessions: { completed: ses.filter((s) => s.status === "completed").length, other: ses.filter((s) => s.status !== "completed").length },
+        messages: (msgs ?? []).filter((m) => sesIds.has(m.session_id)).length,
+        evaluations: { total: ev.length, scored: ev.filter((e) => e.score !== null).length },
+      };
+    };
+    return { ok: true as const, real: summarize(false), synthetic: summarize(true), syntheticIds: testIds.size };
   });
