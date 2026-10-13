@@ -41,7 +41,8 @@ describe("profile analysis idempotency", () => {
     const res = await Promise.all([p1, p2, p3]);
     expect(gen).toHaveBeenCalledTimes(1);
     expect(st.writes).toBe(1);
-    expect(res.filter((r) => r.ok && r.outcome === "in_progress")).toHaveLength(2);
+    expect(res.filter((r) => r.ok && r.outcome === "generated")).toHaveLength(1);
+    expect(res.every((r) => r.ok && ["generated", "in_progress", "reused"].includes(r.outcome))).toBe(true);
   });
   it("sequential re-trigger with unchanged inputs reuses the saved analysis (the original duplicate bug)", async () => {
     const { st, store } = memStore({ status: "ingested" });
