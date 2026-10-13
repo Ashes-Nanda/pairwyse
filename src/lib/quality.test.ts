@@ -21,7 +21,7 @@ describe("conversation quality pass", () => {
   it("regenerates once on repetitive phrasing using prior own messages", async () => {
     const calls: number[] = [];
     const replies = ["That sounds amazing, I agree", "Wait, you restore old bikes? Which one was the hardest?"];
-    const r = await composeTurn(async () => { calls.push(1); return replies[calls.length - 1]!; }, "i", [] as string[], (c) => c, (c) => c, ["That sounds amazing, tell me more"]);
+    const r = await composeTurn(async () => { calls.push(1); return replies[calls.length - 1]!; }, "i", [] as string[], (c) => c, (c) => c, ["That sounds amazing, I really mean it"]);
     expect(calls.length).toBe(2);
     expect(r.text).toBe(replies[1]);
     expect(r.flags).toEqual([]);
