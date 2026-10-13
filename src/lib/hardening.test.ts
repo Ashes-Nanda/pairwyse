@@ -134,7 +134,7 @@ describe("dating prompt and reply checks", () => {
     expect(p).not.toMatch(/say you're not sure \/ it isn't in your profile/); // old instruction that caused the defensive tone
   });
   it("closing turns don't manufacture a romantic outcome", () => {
-    expect(buildDatingInstructions({ ...ctx, turn: 7 })).toMatch(/without promising or implying a romantic outcome/);
+    expect(buildDatingInstructions({ ...ctx, turn: 7 })).toMatch(/Don't promise or imply a romantic outcome/);
   });
   it("detects defensive phrasing", () => {
     expect(isDefensive("My profile doesn't establish whether I like hiking, but…")).toBe(true);
