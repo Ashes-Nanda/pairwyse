@@ -11,6 +11,8 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as JoinRouteImport } from './routes/join'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SessionsIdRouteImport } from './routes/sessions.$id'
+import { Route as ParticipantsIdRouteImport } from './routes/participants.$id'
 import { Route as Char91__mockupChar93PreviewSplatRouteImport } from './routes/[__mockup].preview.$'
 import { Route as Char91__componentChar93PreviewSplatRouteImport } from './routes/[__component].preview.$'
 
@@ -22,6 +24,16 @@ const JoinRoute = JoinRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SessionsIdRoute = SessionsIdRouteImport.update({
+  id: '/sessions/$id',
+  path: '/sessions/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ParticipantsIdRoute = ParticipantsIdRouteImport.update({
+  id: '/participants/$id',
+  path: '/participants/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const Char91__mockupChar93PreviewSplatRoute =
@@ -40,12 +52,16 @@ const Char91__componentChar93PreviewSplatRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/join': typeof JoinRoute
+  '/participants/$id': typeof ParticipantsIdRoute
+  '/sessions/$id': typeof SessionsIdRoute
   '/__component/preview/$': typeof Char91__componentChar93PreviewSplatRoute
   '/__mockup/preview/$': typeof Char91__mockupChar93PreviewSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/join': typeof JoinRoute
+  '/participants/$id': typeof ParticipantsIdRoute
+  '/sessions/$id': typeof SessionsIdRoute
   '/__component/preview/$': typeof Char91__componentChar93PreviewSplatRoute
   '/__mockup/preview/$': typeof Char91__mockupChar93PreviewSplatRoute
 }
@@ -53,18 +69,34 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/join': typeof JoinRoute
+  '/participants/$id': typeof ParticipantsIdRoute
+  '/sessions/$id': typeof SessionsIdRoute
   '/__component/preview/$': typeof Char91__componentChar93PreviewSplatRoute
   '/__mockup/preview/$': typeof Char91__mockupChar93PreviewSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/join' | '/__component/preview/$' | '/__mockup/preview/$'
+  fullPaths:
+    | '/'
+    | '/join'
+    | '/participants/$id'
+    | '/sessions/$id'
+    | '/__component/preview/$'
+    | '/__mockup/preview/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/join' | '/__component/preview/$' | '/__mockup/preview/$'
+  to:
+    | '/'
+    | '/join'
+    | '/participants/$id'
+    | '/sessions/$id'
+    | '/__component/preview/$'
+    | '/__mockup/preview/$'
   id:
     | '__root__'
     | '/'
     | '/join'
+    | '/participants/$id'
+    | '/sessions/$id'
     | '/__component/preview/$'
     | '/__mockup/preview/$'
   fileRoutesById: FileRoutesById
@@ -72,6 +104,8 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   JoinRoute: typeof JoinRoute
+  ParticipantsIdRoute: typeof ParticipantsIdRoute
+  SessionsIdRoute: typeof SessionsIdRoute
   Char91__componentChar93PreviewSplatRoute: typeof Char91__componentChar93PreviewSplatRoute
   Char91__mockupChar93PreviewSplatRoute: typeof Char91__mockupChar93PreviewSplatRoute
 }
@@ -90,6 +124,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sessions/$id': {
+      id: '/sessions/$id'
+      path: '/sessions/$id'
+      fullPath: '/sessions/$id'
+      preLoaderRoute: typeof SessionsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/participants/$id': {
+      id: '/participants/$id'
+      path: '/participants/$id'
+      fullPath: '/participants/$id'
+      preLoaderRoute: typeof ParticipantsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/__mockup/preview/$': {
@@ -112,6 +160,8 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   JoinRoute: JoinRoute,
+  ParticipantsIdRoute: ParticipantsIdRoute,
+  SessionsIdRoute: SessionsIdRoute,
   Char91__componentChar93PreviewSplatRoute:
     Char91__componentChar93PreviewSplatRoute,
   Char91__mockupChar93PreviewSplatRoute: Char91__mockupChar93PreviewSplatRoute,
