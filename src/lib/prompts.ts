@@ -87,7 +87,6 @@ export async function composeTurn<M>(
   const first = await generate(instructions, history);
   const check = (t: string) => [isDefensive(t) && "defensive", hasUnsupportedFact(t) && "unsupported_fact", isRepetitive(t, priorOwn) && "repetitive"].filter(Boolean) as string[];
   const flags = check(first);
-  void [.filter(Boolean) as string[];
   if (!flags.length) return { text: first, regenerated: false, flags };
   const second = await generate(instructions, [...history, mkAssistant(first), mkUser(RETRY_NUDGE)]);
   const after = check(second);

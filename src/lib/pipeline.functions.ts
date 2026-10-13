@@ -330,7 +330,7 @@ export const runNextTurn = createServerFn({ method: "POST" })
     const history = (msgs ?? []).map((m) => ({ role: (m.speaker_id === speaker ? "assistant" : "user") as "assistant" | "user", content: m.content }));
     if (!history.length) history.push({ role: "user", content: `(The date begins. Introduce yourself to ${them?.display_name}'s agent.)` });
     try {
-      const { text: reply } = await composeTurn(generateTextReply, instructions, history, (c) => ({ role: "user" as const, content: c }), (c) => ({ role: "assistant" as const, content: c }));
+      const { text: reply } = await composeTurn(generateTextReply, instructions, history, (c) => ({ role: "user" as const, content: c }), (c) => ({ role: "assistant" as const, content: c }), (msgs ?? []).filter((m) => m.speaker_id === speaker).map((m) => m.content));
       const { error } = await db.from("date_messages").insert({ session_id: s.id, turn, speaker_id: speaker, content: reply });
       if (error && error.code !== "23505") throw new Error(error.message);
       const done = turn + 1 >= s.turns_planned;
