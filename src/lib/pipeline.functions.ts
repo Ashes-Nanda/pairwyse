@@ -361,3 +361,16 @@ export const evaluateSession = createServerFn({ method: "POST" })
       return { ok: false as const, error: (e as Error).message };
     }
   });
+
+// ---------- Data removal ----------
+
+/** Permanently deletes a participant and everything derived from them (cascades to sources, profile, dates, evaluations). */
+export const deleteParticipant = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string; passcode: string }) => idPass.parse(d))
+  .handler(async ({ data }) => {
+    try { requirePasscode(data.passcode); } catch (e) { return { ok: false as const, error: (e as Error).message }; }
+    const db = await admin();
+    const { error } = await db.from("participants").delete().eq("id", data.id);
+    if (error) return { ok: false as const, error: error.message };
+    return { ok: true as const };
+  });

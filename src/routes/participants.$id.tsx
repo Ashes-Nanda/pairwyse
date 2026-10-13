@@ -6,7 +6,7 @@ import { z } from "zod";
 import { Avatar, Badge, Button, Card, Icon, MatchResultCard } from "@/design-system/pairwise-2899a4";
 import { AppShell, STATUS_LABEL, statusBadge } from "@/components/AppShell";
 import { PasscodeGate, usePasscode } from "@/components/Passcode";
-import { analyzeProfile, createSession, getParticipant, refreshIngestion, startIngestion } from "@/lib/pipeline.functions";
+import { analyzeProfile, createSession, deleteParticipant, getParticipant, refreshIngestion, startIngestion } from "@/lib/pipeline.functions";
 
 const q = (id: string) => queryOptions({ queryKey: ["participant", id], queryFn: () => getParticipant({ data: { id } }) });
 
@@ -42,6 +42,7 @@ function ParticipantPage() {
   const refresh = useServerFn(refreshIngestion);
   const analyze = useServerFn(analyzeProfile);
   const newSession = useServerFn(createSession);
+  const removeParticipant = useServerFn(deleteParticipant);
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [partner, setPartner] = useState("");
@@ -220,6 +221,27 @@ function ParticipantPage() {
           </div>
         )}
       </section>
+
+      {pass.passcode && (
+        <section>
+          <h2 className="section-title">Remove this participant</h2>
+          <p className="muted">Permanently deletes {p.display_name}'s retrieved data, profile, dates and evaluations.</p>
+          <Button
+            variant="danger"
+            loading={busy === "delete"}
+            onClick={() => {
+              if (!window.confirm(`Delete all data for ${p.display_name}? This cannot be undone.`)) return;
+              void act("delete", async () => {
+                const r = await removeParticipant({ data: { id, passcode: pc } });
+                if (r.ok) navigate({ to: "/" });
+                return r;
+              });
+            }}
+          >
+            Delete participant data
+          </Button>
+        </section>
+      )}
     </AppShell>
   );
 }

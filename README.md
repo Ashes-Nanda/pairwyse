@@ -61,3 +61,9 @@ bun run dev
 ```
 
 You need the environment variables above. The database schema is in `drizzle/migrations/`.
+
+## Security & data removal
+- The database blocks all direct public reads; pages read only through server functions, which return consenting participants only.
+- Every action that spends Apify/AI credits or deletes data requires `INTAKE_PASSCODE`.
+- Delete a participant (and all derived data) from the bottom of their profile page once unlocked.
+- Copy `.env.example` for variable names; never commit values.
