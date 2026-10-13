@@ -26,17 +26,26 @@ function Join() {
   const navigate = useNavigate();
   const pass = usePasscode();
   const [name, setName] = useState("");
-  const [li, setLi] = useState("");
-  const [ig, setIg] = useState("");
+  const LI = "https://www.linkedin.com/in/";
+  const IG = "https://www.instagram.com/";
+  const keepPrefix = (prefix: string, marker: RegExp) => (v: string) => {
+    const m = v.match(marker);
+    const rest = (m ? v.slice((m.index ?? 0) + m[0].length) : v.startsWith(prefix) ? v.slice(prefix.length) : v.replace(/^https?:\/\/(www\.)?/i, "").replace(/^[^/]*\//, "")).replace(/^@/, "").replace(/\s/g, "");
+    return prefix + rest;
+  };
+  const [li, setLi] = useState(LI);
+  const [ig, setIg] = useState(IG);
   const [consent, setConsent] = useState(false);
   const [adult, setAdult] = useState(false);
   const [touched, setTouched] = useState({ name: false, li: false, ig: false, submit: false });
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const liErr = (touched.li || touched.submit) && li ? validateLinkedInUrl(li) : touched.submit && !li ? "Add your LinkedIn profile URL" : null;
-  const igErr = (touched.ig || touched.submit) && ig ? validateInstagramUrl(ig) : touched.submit && !ig ? "Add your public Instagram profile URL" : null;
-  const linksOk = !!li && !!ig && !validateLinkedInUrl(li) && !validateInstagramUrl(ig);
+  const liEmpty = li === LI;
+  const igEmpty = ig === IG;
+  const liErr = (touched.li || touched.submit) && !liEmpty ? validateLinkedInUrl(li) : touched.submit && liEmpty ? "Add your LinkedIn profile URL" : null;
+  const igErr = (touched.ig || touched.submit) && !igEmpty ? validateInstagramUrl(ig) : touched.submit && igEmpty ? "Add your public Instagram profile URL" : null;
+  const linksOk = !liEmpty && !igEmpty && !validateLinkedInUrl(li) && !validateInstagramUrl(ig);
   const step = !pass.passcode ? 0 : !name.trim() || !linksOk ? 1 : !(consent && adult) ? 2 : 3;
   const stepState = (i: number) => (i < step ? "done" : i === step ? "current" : "todo");
 
@@ -86,8 +95,8 @@ function Join() {
           <div className="panel">
             <h2 className="h3">Your links</h2>
             <Input label="First name or nickname" value={name} onChange={(e) => setName(e.target.value)} onBlur={() => setTouched((t) => ({ ...t, name: true }))} maxLength={80} required autoComplete="given-name" hint="Shown on your profile and your dates." error={touched.name && !name.trim() ? "Add the name you'd like shown" : undefined} />
-            <Input label="LinkedIn profile URL" type="url" inputMode="url" value={li} onChange={(e) => setLi(e.target.value)} onBlur={() => setTouched((t) => ({ ...t, li: true }))} hint="Your personal profile, like linkedin.com/in/your-name" error={liErr ?? undefined} />
-            <Input label="Public Instagram profile URL" type="url" inputMode="url" value={ig} onChange={(e) => setIg(e.target.value)} onBlur={() => setTouched((t) => ({ ...t, ig: true }))} hint="Your profile page, like instagram.com/username. Private accounts can't be read." error={igErr ?? undefined} />
+            <Input label="LinkedIn profile URL" type="url" inputMode="url" value={li} onChange={(e) => setLi(keepPrefix(LI, /linkedin\.com\/in\//i)(e.target.value))} onBlur={() => setTouched((t) => ({ ...t, li: true }))} hint="Just type the end of your profile link, like your-name" error={liErr ?? undefined} />
+            <Input label="Public Instagram profile URL" type="url" inputMode="url" value={ig} onChange={(e) => setIg(keepPrefix(IG, /instagram\.com\//i)(e.target.value))} onBlur={() => setTouched((t) => ({ ...t, ig: true }))} hint="Just type your username. Private accounts can't be read." error={igErr ?? undefined} />
           </div>
 
           <div className="panel">
