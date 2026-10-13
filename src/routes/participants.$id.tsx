@@ -216,7 +216,7 @@ function ParticipantPage() {
                 name={`${r.rank ? `#${r.rank} ` : ""}${r.candidate_name}`}
                 score={r.score ?? undefined}
                 subtitle={`${rubricSummary(r.rubric as Rubric).rated.length} of 5 criteria rated${rubricSummary(r.rubric as Rubric).unknown.length ? ` · unknown: ${rubricSummary(r.rubric as Rubric).unknown.map((k) => k.replace(/_/g, " ")).join(", ")}` : ""}`}
-                coverage={`Match evidence: ${COVERAGE_LABEL[r.match_coverage]} —`}
+                coverage={COVERAGE_LABEL[r.match_coverage]}
                 confidence={(r.confidence.charAt(0).toUpperCase() + r.confidence.slice(1)) as "Low" | "Medium" | "High"}
                 interests={r.shared_interests as string[]}
                 conflicts={r.conflicts as string[]}

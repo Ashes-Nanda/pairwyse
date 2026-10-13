@@ -91,9 +91,9 @@ export function matchCoverage(evaluator: Coverage | null | undefined, candidate:
 }
 
 export const COVERAGE_LABEL: Record<Coverage, string> = {
-  full: "Both profiles: 2 of 2 sources",
-  partial: "At least one profile: 1 of 2 sources",
-  missing: "Profile evidence missing",
+  full: "Full match", // both profiles built from 2 of 2 sources
+  partial: "Partial match", // at least one profile built from 1 of 2 sources
+  missing: "No match",
 };
 
 /** Which rubric criteria were rated vs unknown, for display. */
