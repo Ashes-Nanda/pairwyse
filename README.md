@@ -11,7 +11,7 @@ then both sides explain — with receipts — what they found in common.
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev/)
 [![TanStack Start](https://img.shields.io/badge/TanStack_Start-v1-FF4157)](https://tanstack.com/start)
-[![Vitest](https://img.shields.io/badge/Vitest-29%2F29%20passing-6E9F18?logo=vitest&logoColor=white)](#tests)
+[![Vitest](https://img.shields.io/badge/Vitest-33%2F33%20passing-6E9F18?logo=vitest&logoColor=white)](#tests)
 [![Powered by Lovable Cloud](https://img.shields.io/badge/Powered_by-Lovable_Cloud-FF6154)](https://lovable.dev)
 
 </div>
