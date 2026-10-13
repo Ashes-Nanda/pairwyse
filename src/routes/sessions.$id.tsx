@@ -7,7 +7,8 @@ import { AgentStatusCard, Badge, Button, Card } from "@/design-system/pairwise-2
 import { AppShell, STATUS_LABEL, statusBadge } from "@/components/AppShell";
 import { PasscodeGate, usePasscode } from "@/components/Passcode";
 import { evaluateSession, getSession, runNextTurn } from "@/lib/pipeline.functions";
-import { RUBRIC_WEIGHTS } from "@/lib/ranking";
+import { RUBRIC_WEIGHTS, SCORE_DISCLAIMER, noScoreReason, rubricSummary, type Confidence, type Rubric, type RubricKey } from "@/lib/ranking";
+import { readCriteriaEvidence } from "@/lib/evidence";
 
 const q = (id: string) => queryOptions({ queryKey: ["session", id], queryFn: () => getSession({ data: { id } }) });
 
@@ -116,13 +117,25 @@ function SessionPage() {
               <Card key={e.evaluator_id} variant="raised">
                 <div className="col">
                   <h3 className="pw-title">{name(e.evaluator_id)} → {name(e.candidate_id)}</h3>
-                  <div className="row"><span className="pw-score">{e.score === null ? "No score" : `${e.score}%`}</span><span className="muted">{e.confidence} confidence</span></div>
+                  <div className="row"><span className="pw-score">{e.score === null ? "No score" : `${e.score}%`}</span><span className="muted">{e.confidence} confidence · {rubricSummary(e.rubric as Rubric).rated.length} of 5 criteria rated</span></div>
+                  {e.score === null && <p className="muted">{noScoreReason(e.rubric as Rubric, e.confidence as Confidence)}</p>}
+                  <p className="pw-meta">{SCORE_DISCLAIMER}</p>
                   <p className="pw-small">{e.explanation}</p>
                   <table className="table">
                     <tbody>
-                      {Object.keys(RUBRIC_WEIGHTS).map((k) => (
-                        <tr key={k}><td>{k.replace(/_/g, " ")}</td><td>{(e.rubric as Record<string, number | null>)[k] ?? "unknown"}{(e.rubric as Record<string, number | null>)[k] !== null ? " / 5" : ""}</td></tr>
-                      ))}
+                      {(Object.keys(RUBRIC_WEIGHTS) as RubricKey[]).map((k) => {
+                        const v = (e.rubric as Record<string, number | null>)[k];
+                        const ce = readCriteriaEvidence(e.criteria_evidence)?.[k];
+                        return (
+                          <tr key={k}>
+                            <td>{k.replace(/_/g, " ")}</td>
+                            <td>{v ?? "unknown"}{v !== null && v !== undefined ? " / 5" : ""}</td>
+                            <td className="pw-small">
+                              {ce ? (<>{ce.reason}{ce.refs.length > 0 && <div className="muted">Evidence: {ce.refs.map((r) => r.ref.startsWith("M") ? `message ${Number(r.ref.slice(1)) + 1}` : `“${r.label}”`).join("; ")}</div>}</>) : <span className="muted">Not recorded (legacy evaluation)</span>}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                   {(e.shared_interests as string[]).length > 0 && <div className="pw-chips">{(e.shared_interests as string[]).map((x) => <span key={x} className="pw-chip">{x}</span>)}</div>}
