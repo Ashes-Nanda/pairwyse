@@ -5,9 +5,10 @@ import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { Avatar, Badge, Button, Card, Icon, MatchResultCard } from "@/design-system/pairwise-2899a4";
 import { AppShell, STATUS_LABEL, statusBadge } from "@/components/AppShell";
+import { PasscodeGate, usePasscode } from "@/components/Passcode";
 import { analyzeProfile, createSession, getParticipant, refreshIngestion, startIngestion } from "@/lib/pipeline.functions";
 
-const q = (id: string) => queryOptions({ queryKey: ["participant", id], queryFn: () => getParticipant({ data: { id } }) });
+const q = (id: string) => queryOptions({ queryKey: ["participant", id], queryFn: () => getParticipant({ data: { id, passcode: pc } }) });
 
 export const Route = createFileRoute("/participants/$id")({
   validateSearch: z.object({ autostart: z.boolean().optional() }),
@@ -45,6 +46,8 @@ function ParticipantPage() {
   const [err, setErr] = useState<string | null>(null);
   const [partner, setPartner] = useState("");
   const started = useRef(false);
+  const pass = usePasscode();
+  const pc = pass.passcode ?? "";
 
   const reload = () => qc.invalidateQueries({ queryKey: ["participant", id] });
   const status = data?.participant.status;
@@ -65,21 +68,21 @@ function ParticipantPage() {
 
   // Auto-orchestrate: start ingestion once after intake, poll while running, analyse when sources are in.
   useEffect(() => {
-    if (!data) return;
+    if (!data || !pass.passcode) return;
     if (autostart && !started.current && data.sources.length === 0) {
       started.current = true;
-      void act("ingest", () => start({ data: { id } }));
+      void act("ingest", () => start({ data: { id, passcode: pc } }));
       return;
     }
     if (status === "ingesting" && data.sources.length > 0 && !busy) {
-      const t = setTimeout(() => void act("refresh", () => refresh({ data: { id } })), 8000);
+      const t = setTimeout(() => void act("refresh", () => refresh({ data: { id, passcode: pc } })), 8000);
       return () => clearTimeout(t);
     }
     if ((status === "ingested" || status === "partial") && !busy) {
-      void act("analyze", () => analyze({ data: { id } }));
+      void act("analyze", () => analyze({ data: { id, passcode: pc } }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, data?.sources.length, busy]);
+  }, [status, data?.sources.length, busy, pass.passcode]);
 
   if (!data) return <AppShell><p>Participant not found.</p></AppShell>;
   const { participant: p, sources, profile, sessions, ranking, candidates, totalOthers } = data;
@@ -99,6 +102,7 @@ function ParticipantPage() {
       </section>
       {p.error && <div className="alert" role="alert">{p.error}</div>}
       {err && <div className="alert" role="alert">{err}</div>}
+      {!pass.passcode && !p.is_demo && <PasscodeGate onSave={pass.save} />}
 
       <section>
         <h2 className="section-title">Sources</h2>
@@ -119,11 +123,11 @@ function ParticipantPage() {
         </div>
         <div className="row" style={{ marginTop: "var(--space-4)" }}>
           {(sources.length < 2 || sources.some((s) => s.status === "failed")) && (
-            <Button variant="secondary" loading={busy === "ingest"} onClick={() => act("ingest", () => start({ data: { id } }))}>{sources.length ? "Retry failed sources" : "Start retrieval"}</Button>
+            <Button variant="secondary" loading={busy === "ingest"} onClick={() => act("ingest", () => start({ data: { id, passcode: pc } }))}>{sources.length ? "Retry failed sources" : "Start retrieval"}</Button>
           )}
-          {status === "ingesting" && <Button variant="ghost" loading={busy === "refresh"} onClick={() => act("refresh", () => refresh({ data: { id } }))}>Check status now</Button>}
+          {status === "ingesting" && <Button variant="ghost" loading={busy === "refresh"} onClick={() => act("refresh", () => refresh({ data: { id, passcode: pc } }))}>Check status now</Button>}
           {["analysis_failed", "profiled", "partial"].includes(status ?? "") && (
-            <Button variant="agent" loading={busy === "analyze"} onClick={() => act("analyze", () => analyze({ data: { id } }))}><Icon name="sparkles" />{profile ? "Re-run analysis" : "Analyse profile"}</Button>
+            <Button variant="agent" loading={busy === "analyze"} onClick={() => act("analyze", () => analyze({ data: { id, passcode: pc } }))}><Icon name="sparkles" />{profile ? "Re-run analysis" : "Analyse profile"}</Button>
           )}
         </div>
       </section>
@@ -172,7 +176,7 @@ function ParticipantPage() {
               {candidates.map((c) => <option key={c.id} value={c.id}>{c.display_name}</option>)}
             </select>
             <Button disabled={!partner} loading={busy === "date"} onClick={() => act("date", async () => {
-              const r = await newSession({ data: { a: id, b: partner } });
+              const r = await newSession({ data: { a: id, b: partner, passcode: pc } });
               if (r.ok) navigate({ to: "/sessions/$id", params: { id: r.id }, search: { run: true } });
               return r;
             })}><Icon name="heart" />Start date</Button>

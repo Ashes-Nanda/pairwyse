@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { Button, Icon, Input } from "@/design-system/pairwise-2899a4";
 import { AppShell } from "@/components/AppShell";
+import { PasscodeGate, usePasscode } from "@/components/Passcode";
 import { createParticipant } from "@/lib/pipeline.functions";
 import { validateInstagramUrl, validateLinkedInUrl } from "@/lib/ranking";
 
@@ -23,6 +24,7 @@ export const Route = createFileRoute("/join")({
 function Join() {
   const create = useServerFn(createParticipant);
   const navigate = useNavigate();
+  const pass = usePasscode();
   const [name, setName] = useState("");
   const [li, setLi] = useState("");
   const [ig, setIg] = useState("");
@@ -43,7 +45,7 @@ function Join() {
     if (!consent || !adult) return setError("Consent and age confirmation are required before any processing.");
     setBusy(true);
     try {
-      const res = await create({ data: { display_name: name, linkedin_url: li, instagram_url: ig, consent: true, adult: true } });
+      const res = await create({ data: { display_name: name, linkedin_url: li, instagram_url: ig, consent: true, adult: true, passcode: pass.passcode ?? "" } });
       if (!res.ok) return setError(res.error);
       navigate({ to: "/participants/$id", params: { id: res.id }, search: { autostart: true } });
     } catch (err) {
@@ -59,6 +61,7 @@ function Join() {
         <h1 className="page-title">Add a participant</h1>
         <p className="muted">Only add yourself, or someone who has explicitly agreed. Instagram must be public.</p>
       </div>
+      {!pass.passcode ? <PasscodeGate onSave={pass.save} /> : (
       <form className="form" onSubmit={submit} noValidate>
         <Input label="Display name" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} required error={touched && !name.trim() ? "Enter a name" : undefined} />
         <Input label="LinkedIn profile URL" type="url" value={li} onChange={(e) => setLi(e.target.value)} placeholder="https://www.linkedin.com/in/your-name" error={liErr ?? undefined} />
@@ -74,6 +77,7 @@ function Join() {
         {error && <div className="alert" role="alert">{error}</div>}
         <div><Button type="submit" loading={busy}><Icon name="sparkles" />Create agent</Button></div>
       </form>
+      )}
     </AppShell>
   );
 }

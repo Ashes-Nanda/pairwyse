@@ -51,6 +51,7 @@ function Index() {
           <div className="stat"><strong>{data.participants.length}</strong><span className="muted">participants</span></div>
           <div className="stat"><strong>{profiled}</strong><span className="muted">profiles ready</span></div>
           <div className="stat"><strong>{data.completedSessions}</strong><span className="muted">completed dates</span></div>
+          <div className="stat"><strong>{data.completedEvaluations}</strong><span className="muted">directional evaluations</span></div>
           <div className="stat"><strong>{demo.length} / 25</strong><span className="muted">saved demo cohort</span></div>
         </div>
       </section>

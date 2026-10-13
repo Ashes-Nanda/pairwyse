@@ -5,10 +5,11 @@ import { useEffect, useState } from "react";
 import { z } from "zod";
 import { AgentStatusCard, Badge, Button, Card } from "@/design-system/pairwise-2899a4";
 import { AppShell, STATUS_LABEL, statusBadge } from "@/components/AppShell";
+import { PasscodeGate, usePasscode } from "@/components/Passcode";
 import { evaluateSession, getSession, runNextTurn } from "@/lib/pipeline.functions";
 import { RUBRIC_WEIGHTS } from "@/lib/ranking";
 
-const q = (id: string) => queryOptions({ queryKey: ["session", id], queryFn: () => getSession({ data: { id } }) });
+const q = (id: string) => queryOptions({ queryKey: ["session", id], queryFn: () => getSession({ data: { id, passcode: pass.passcode ?? "" } }) });
 
 export const Route = createFileRoute("/sessions/$id")({
   validateSearch: z.object({ run: z.boolean().optional() }),
@@ -36,24 +37,25 @@ function SessionPage() {
   const [working, setWorking] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [autoRun, setAutoRun] = useState(!!run);
+  const pass = usePasscode();
 
   const s = data?.session;
   useEffect(() => {
-    if (!s || !autoRun || working) return;
+    if (!s || !autoRun || working || !pass.passcode) return;
     if (s.status === "running" && data.messages.length < s.turns_planned) {
       setWorking(true);
-      next({ data: { id } })
+      next({ data: { id, passcode: pass.passcode ?? "" } })
         .catch((e) => { setErr((e as Error).message); setAutoRun(false); })
         .finally(async () => { await qc.invalidateQueries({ queryKey: ["session", id] }); setWorking(false); });
     } else if (s.status === "evaluating") {
       setWorking(true);
-      evaluate({ data: { id } })
+      evaluate({ data: { id, passcode: pass.passcode ?? "" } })
         .then((r) => { if (!r.ok) setErr(r.error); })
         .catch((e) => setErr((e as Error).message))
         .finally(async () => { setAutoRun(false); await qc.invalidateQueries({ queryKey: ["session", id] }); setWorking(false); });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [s?.status, data?.messages.length, autoRun, working]);
+  }, [s?.status, data?.messages.length, autoRun, working, pass.passcode]);
 
   if (!data || !s) return <AppShell><p>Session not found.</p></AppShell>;
   const name = (pid: string) => data.people.find((p) => p.id === pid)?.display_name ?? "Unknown";
@@ -84,12 +86,15 @@ function SessionPage() {
         />
       )}
       {(err || s.error) && <div className="alert" role="alert">{err ?? s.error}</div>}
-      {!autoRun && (s.status === "running" || s.status === "evaluating" || s.status === "failed") && (
+      {!pass.passcode && s.status !== "completed" && <PasscodeGate onSave={pass.save} />}
+      {!autoRun && pass.passcode && (s.status === "running" || s.status === "evaluating" || s.status === "failed") && (
         <div><Button variant="agent" onClick={() => { setErr(null); setAutoRun(true); }}>{s.status === "failed" ? "Resume" : "Continue"} date</Button></div>
       )}
 
       <section className="chat" aria-live="polite">
         {data.messages.length === 0 && <p className="muted">No messages generated yet.</p>}
+        {s.status !== "completed" && data.messages.length > 0 && data.messages.length < s.turns_planned && !working && <div className="notice">Interrupted: {data.messages.length} of {s.turns_planned} messages were generated and saved. No evaluation exists for this pair yet.</div>}
+        {s.status === "failed" && data.messages.length >= s.turns_planned && data.evaluations.length < 2 && <div className="notice">Conversation complete, but evaluation failed. This pair is not ranked.</div>}
         {data.messages.map((m) => (
           <div key={m.turn} className={`bubble ${m.speaker_id === s.participant_b ? "bubble--b" : ""}`}>
             <div className="pw-meta">{name(m.speaker_id)}'s agent · turn {m.turn + 1}</div>
