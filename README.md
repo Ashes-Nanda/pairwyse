@@ -126,7 +126,6 @@ Secrets live on the server only. Nothing is committed; copy `.env.example` for n
 
 | Name | Required | Purpose |
 |---|---|---|
-| `INTAKE_PASSCODE` | yes | Operator passcode for intake and every credit-spending action; without it processing is disabled |
 | `APIFY_API_KEY` | yes | Apify connection key (set by linking the Apify connector) |
 | `LOVABLE_API_KEY` | yes | Lovable AI Gateway + connector gateway (auto-provisioned) |
 | `APIFY_LINKEDIN_ACTOR_ID` | optional | Override the LinkedIn actor (default `harvestapi~linkedin-profile-scraper`) |
@@ -136,7 +135,7 @@ Secrets live on the server only. Nothing is committed; copy `.env.example` for n
 ## Security & data removal
 
 - The database blocks all direct public reads; pages read only through server functions, which return consenting participants only.
-- Every action that spends Apify/AI credits or deletes data requires the operator passcode.
+- There is no operator passcode: anyone with the link can run retrievals, dates and deletions.
 - Deleting a participant (from the bottom of their profile page) cascades to all derived data.
 - Apify is the only source of profile data, and contact details are dropped at normalization time.
 
