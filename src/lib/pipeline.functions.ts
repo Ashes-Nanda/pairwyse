@@ -2,17 +2,14 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { computeScore, matchCoverage, rankCandidates, validateInstagramUrl, validateLinkedInUrl, type Coverage, type Rubric } from "./ranking";
 
-function requirePasscode(passcode: string | undefined) {
-  const expected = process.env["INTAKE_PASSCODE"];
-  if (!expected) throw new Error("Processing is disabled: INTAKE_PASSCODE is not configured on the server.");
-  if (!passcode || passcode !== expected) throw new Error("Incorrect passcode.");
-}
+// Operator passcode removed by product decision: all actions are open.
+function requirePasscode(_passcode: string | undefined) {}
 
-const withPass = <T extends z.ZodRawShape>(shape: T) => z.object({ ...shape, passcode: z.string().max(200) });
+const withPass = <T extends z.ZodRawShape>(shape: T) => z.object({ ...shape, passcode: z.string().max(200).optional().default("") });
 const idPass = withPass({ id: z.string().uuid() });
 
 export const checkPasscode = createServerFn({ method: "POST" })
-  .inputValidator((d: { passcode: string }) => z.object({ passcode: z.string().max(200) }).parse(d))
+  .inputValidator((d: { passcode: string }) => z.object({ passcode: z.string().max(200).optional().default("") }).parse(d))
   .handler(async ({ data }) => {
     try { requirePasscode(data.passcode); return { ok: true as const }; } catch (e) { return { ok: false as const, error: (e as Error).message }; }
   });
@@ -108,7 +105,7 @@ const intakeSchema = z.object({
   instagram_url: z.string().trim().url().max(300),
   consent: z.literal(true),
   adult: z.literal(true),
-  passcode: z.string().max(200),
+  passcode: z.string().max(200).optional().default(""),
 });
 
 export const createParticipant = createServerFn({ method: "POST" })
@@ -417,7 +414,7 @@ export const deleteParticipant = createServerFn({ method: "POST" })
 
 /** Passcode-gated pre-demo verification counts. Real (is_test=false) and synthetic counts are reported separately. */
 export const getOpsSummary = createServerFn({ method: "POST" })
-  .inputValidator((d: { passcode: string }) => z.object({ passcode: z.string().max(200) }).parse(d))
+  .inputValidator((d: { passcode: string }) => z.object({ passcode: z.string().max(200).optional().default("") }).parse(d))
   .handler(async ({ data }) => {
     try { requirePasscode(data.passcode); } catch (e) { return { ok: false as const, error: (e as Error).message }; }
     const db = await admin();

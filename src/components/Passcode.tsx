@@ -1,21 +1,13 @@
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button, Input } from "@/design-system/pairwise-2899a4";
 import { checkPasscode } from "@/lib/pipeline.functions";
 
-const KEY = "pairwise-passcode";
 
 /** Operator passcode kept in sessionStorage; required for anything that spends Apify/AI credits. */
+/** Passcode removed: always unlocked so every action is available. */
 export function usePasscode() {
-  const [passcode, setPasscode] = useState<string | null>(null);
-  useEffect(() => {
-    setPasscode(sessionStorage.getItem(KEY));
-  }, []);
-  return {
-    passcode,
-    save: (v: string) => { sessionStorage.setItem(KEY, v); setPasscode(v); },
-    clear: () => { sessionStorage.removeItem(KEY); setPasscode(null); },
-  };
+  return { passcode: "open" as string | null, save: (_v: string) => {}, clear: () => {} };
 }
 
 export function PasscodeGate({ onSave }: { onSave: (v: string) => void }) {
