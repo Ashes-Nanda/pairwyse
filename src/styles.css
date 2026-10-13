@@ -199,3 +199,9 @@ dialog.dialog::backdrop { background: var(--text-primary); opacity: .4; }
   .nav__inner { padding: var(--space-3) var(--space-4); }
   .bubble { font-size: var(--text-body); }
 }
+.generated, .muted, .quote, .prose { overflow-wrap: anywhere; }
+@media (max-width: 600px) {
+  .nav__link { display: none; }
+  .tabs { flex-wrap: nowrap; overflow-x: auto; }
+  .tab { white-space: nowrap; }
+}
