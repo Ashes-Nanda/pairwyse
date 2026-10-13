@@ -2,6 +2,21 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { computeScore, rankCandidates, validateInstagramUrl, validateLinkedInUrl, type Rubric } from "./ranking";
 
+function requirePasscode(passcode: string | undefined) {
+  const expected = process.env["INTAKE_PASSCODE"];
+  if (!expected) throw new Error("Processing is disabled: INTAKE_PASSCODE is not configured on the server.");
+  if (!passcode || passcode !== expected) throw new Error("Incorrect passcode.");
+}
+
+const withPass = <T extends z.ZodRawShape>(shape: T) => z.object({ ...shape, passcode: z.string().max(200) });
+const idPass = withPass({ id: z.string().uuid() });
+
+export const checkPasscode = createServerFn({ method: "POST" })
+  .inputValidator((d: { passcode: string }) => z.object({ passcode: z.string().max(200) }).parse(d))
+  .handler(async ({ data }) => {
+    try { requirePasscode(data.passcode); return { ok: true as const }; } catch (e) { return { ok: false as const, error: (e as Error).message }; }
+  });
+
 async function admin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   return supabaseAdmin;
@@ -22,8 +37,11 @@ export const listParticipants = createServerFn({ method: "GET" }).handler(async 
     .eq("consent_confirmed", true)
     .order("created_at", { ascending: true });
   if (error) throw new Error(error.message);
-  const { count: sessions } = await db.from("date_sessions").select("id", { count: "exact", head: true }).eq("status", "completed");
-  return { participants: data ?? [], completedSessions: sessions ?? 0 };
+  const [{ count: sessions }, { count: evals }] = await Promise.all([
+    db.from("date_sessions").select("id", { count: "exact", head: true }).eq("status", "completed"),
+    db.from("evaluations").select("id", { count: "exact", head: true }),
+  ]);
+  return { participants: data ?? [], completedSessions: sessions ?? 0, completedEvaluations: evals ?? 0 };
 });
 
 export const getParticipant = createServerFn({ method: "GET" })
@@ -83,11 +101,13 @@ const intakeSchema = z.object({
   instagram_url: z.string().trim().url().max(300),
   consent: z.literal(true),
   adult: z.literal(true),
+  passcode: z.string().max(200),
 });
 
 export const createParticipant = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => intakeSchema.parse(d))
   .handler(async ({ data }) => {
+    try { requirePasscode(data.passcode); } catch (e) { return { ok: false as const, error: (e as Error).message }; }
     const li = validateLinkedInUrl(data.linkedin_url);
     const ig = validateInstagramUrl(data.instagram_url);
     if (li || ig) return { ok: false as const, error: li ?? ig! };
@@ -112,8 +132,9 @@ export const createParticipant = createServerFn({ method: "POST" })
 // ---------- Ingestion ----------
 
 export const startIngestion = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
+  .inputValidator((d: { id: string; passcode: string }) => idPass.parse(d))
   .handler(async ({ data }) => {
+    requirePasscode(data.passcode);
     const { startRun } = await import("./apify.server");
     const db = await admin();
     const { data: p } = await db.from("participants").select("*").eq("id", data.id).single();
@@ -185,8 +206,8 @@ async function refresh(id: string) {
 }
 
 export const refreshIngestion = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
-  .handler(async ({ data }) => refresh(data.id));
+  .inputValidator((d: { id: string; passcode: string }) => idPass.parse(d))
+  .handler(async ({ data }) => { requirePasscode(data.passcode); return refresh(data.id); });
 
 // ---------- Profile analysis ----------
 
@@ -209,8 +230,9 @@ const profileSchema = z.object({
 });
 
 export const analyzeProfile = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
+  .inputValidator((d: { id: string; passcode: string }) => idPass.parse(d))
   .handler(async ({ data }) => {
+    requirePasscode(data.passcode);
     const { generateStructured, AI_MODEL } = await import("./ai.server");
     const db = await admin();
     const { data: sources } = await db.from("source_records").select("source, source_url, status, normalized").eq("participant_id", data.id);
@@ -238,8 +260,9 @@ export const analyzeProfile = createServerFn({ method: "POST" })
 // ---------- Dating sessions ----------
 
 export const createSession = createServerFn({ method: "POST" })
-  .inputValidator((d: { a: string; b: string }) => z.object({ a: z.string().uuid(), b: z.string().uuid() }).refine((x) => x.a !== x.b).parse(d))
+  .inputValidator((d: { a: string; b: string; passcode: string }) => withPass({ a: z.string().uuid(), b: z.string().uuid() }).refine((x) => x.a !== x.b).parse(d))
   .handler(async ({ data }) => {
+    requirePasscode(data.passcode);
     const db = await admin();
     const { data: ps } = await db.from("participants").select("id, status").in("id", [data.a, data.b]);
     if ((ps ?? []).length !== 2 || ps!.some((p) => p.status !== "profiled")) return { ok: false as const, error: "Both participants need a completed profile." };
@@ -250,8 +273,9 @@ export const createSession = createServerFn({ method: "POST" })
 
 /** Generates and persists exactly one agent turn. Client calls repeatedly until done. */
 export const runNextTurn = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
+  .inputValidator((d: { id: string; passcode: string }) => idPass.parse(d))
   .handler(async ({ data }) => {
+    requirePasscode(data.passcode);
     const { generateTextReply, AI_MODEL } = await import("./ai.server");
     const db = await admin();
     const { data: s } = await db.from("date_sessions").select("*").eq("id", data.id).single();
@@ -301,8 +325,9 @@ const evalSchema = z.object({
 });
 
 export const evaluateSession = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
+  .inputValidator((d: { id: string; passcode: string }) => idPass.parse(d))
   .handler(async ({ data }) => {
+    requirePasscode(data.passcode);
     const { generateStructured, AI_MODEL } = await import("./ai.server");
     const db = await admin();
     const { data: s } = await db.from("date_sessions").select("*").eq("id", data.id).single();
