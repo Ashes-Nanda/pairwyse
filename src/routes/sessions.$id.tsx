@@ -3,30 +3,35 @@ import { queryOptions, useQueryClient, useSuspenseQuery } from "@tanstack/react-
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { z } from "zod";
-import { AgentStatusCard, Badge, Button, Card } from "@/design-system/pairwise-2899a4";
-import { AppShell, STATUS_LABEL, statusBadge } from "@/components/AppShell";
+import { Avatar, Badge, Button, Card, Icon } from "@/design-system/pairwise-2899a4";
+import { AppShell, ConfidenceLabel, CriteriaMeter, EmptyState, ErrorNote, RecordKind } from "@/components/AppShell";
 import { PasscodeGate, usePasscode } from "@/components/Passcode";
 import { evaluateSession, getSession, runNextTurn } from "@/lib/pipeline.functions";
-import { RUBRIC_WEIGHTS, SCORE_DISCLAIMER, noScoreReason, rubricSummary, type Confidence, type Rubric, type RubricKey } from "@/lib/ranking";
-import { readCriteriaEvidence } from "@/lib/evidence";
+import { rubricSummary, type Rubric } from "@/lib/ranking";
 
 const q = (id: string) => queryOptions({ queryKey: ["session", id], queryFn: () => getSession({ data: { id } }) });
 
 export const Route = createFileRoute("/sessions/$id")({
   validateSearch: z.object({ run: z.boolean().optional() }),
   loader: ({ context, params }) => context.queryClient.ensureQueryData(q(params.id)),
-  head: () => ({
-    meta: [
-      { title: "Agent date — PAIRWISE" },
-      { name: "description", content: "A persisted conversation between two PAIRWISE agents and their directional evaluations." },
-      { property: "og:title", content: "Agent date — PAIRWISE" },
-      { property: "og:description", content: "Real generated agent conversation with explainable evaluation." },
-      { property: "og:type", content: "article" },
-      { name: "twitter:card", content: "summary" },
-    ],
-  }),
+  head: ({ loaderData }) => {
+    const n = (loaderData?.people ?? []).map((p) => p.display_name).join(" × ") || "Agent date";
+    return {
+      meta: [
+        { title: `${n} — agent date on PAIRWISE` },
+        { name: "description", content: `The saved eight-message conversation between ${n}'s agents, with evidence and match breakdowns.` },
+        { property: "og:title", content: `${n} — agent date on PAIRWISE` },
+        { property: "og:description", content: "A real, persisted agent-to-agent first date." },
+        { property: "og:type", content: "article" },
+        { name: "twitter:card", content: "summary" },
+      ],
+    };
+  },
   component: SessionPage,
+  notFoundComponent: () => <AppShell><EmptyState title="Date not found" /></AppShell>,
 });
+
+type Ev = { claim: string; source: string; quote: string };
 
 function SessionPage() {
   const { id } = Route.useParams();
@@ -38,15 +43,17 @@ function SessionPage() {
   const [working, setWorking] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [autoRun, setAutoRun] = useState(!!run);
+  const [resumed, setResumed] = useState(false);
   const pass = usePasscode();
 
   const s = data?.session;
+  // Orchestration (unchanged): one persisted turn per call; evaluation only after all planned turns exist.
   useEffect(() => {
     if (!s || !autoRun || working || !pass.passcode) return;
     if ((s.status === "running" || s.status === "failed") && data.messages.length < s.turns_planned) {
       setWorking(true);
       next({ data: { id, passcode: pass.passcode ?? "" } })
-        .catch((e) => { setErr(`${(e as Error).message} — saved messages are kept. Press Resume to retry this turn.`); setAutoRun(false); })
+        .catch((e) => { setErr(`${(e as Error).message}`); setAutoRun(false); })
         .finally(async () => { await qc.invalidateQueries({ queryKey: ["session", id] }); setWorking(false); });
     } else if (s.status === "failed" && data.messages.length >= s.turns_planned) {
       setWorking(true);
@@ -63,90 +70,126 @@ function SessionPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [s?.status, data?.messages.length, autoRun, working, pass.passcode]);
 
-  if (!data || !s) return <AppShell><p>Session not found.</p></AppShell>;
-  const name = (pid: string) => data.people.find((p) => p.id === pid)?.display_name ?? "Unknown";
+  if (!data || !s) return <AppShell><EmptyState title="Date not found" /></AppShell>;
+  const person = (pid: string) => data.people.find((p) => p.id === pid);
+  const name = (pid: string) => person(pid)?.display_name ?? "Unknown";
   const isDemo = data.people.some((p) => p.is_demo);
-  const progress = Math.round((data.messages.length / s.turns_planned) * 100);
+  const isTest = data.people.some((p) => p.is_test);
+  const n = data.messages.length;
+  const complete = n >= s.turns_planned;
+  const evalA = data.evaluations.find((e) => e.evaluator_id === s.participant_a);
+  const evalB = data.evaluations.find((e) => e.evaluator_id === s.participant_b);
+
+  // Honest state label derived only from persisted status + what this page is doing right now.
+  const state =
+    s.status === "completed" ? { label: "Completed", badge: "completed" as const, note: `All ${s.turns_planned} messages and both evaluations are saved.` }
+    : working && s.status === "evaluating" ? { label: "Evaluating", badge: "running" as const, note: "Both agents are writing their evaluations." }
+    : working ? { label: resumed ? "Resumed — agents talking" : "Agents talking", badge: "running" as const, note: `Writing message ${n + 1} of ${s.turns_planned}.` }
+    : s.status === "failed" && complete ? { label: "Evaluation failed", badge: "failed" as const, note: "The conversation is complete, but the evaluation didn't finish. This pair isn't ranked yet." }
+    : s.status === "failed" ? { label: "Interrupted", badge: "failed" as const, note: `Stopped after ${n} of ${s.turns_planned} saved messages. Nothing was lost.` }
+    : s.status === "evaluating" ? { label: "Waiting to evaluate", badge: "partial" as const, note: "Conversation complete; evaluation hasn't run yet." }
+    : n > 0 ? { label: "Paused", badge: "partial" as const, note: `${n} of ${s.turns_planned} messages saved. No evaluation exists until all ${s.turns_planned} are done.` }
+    : { label: "Not started", badge: "pending" as const, note: "No messages yet." };
+
+  const canContinue = pass.passcode && !working && s.status !== "completed";
 
   return (
     <AppShell>
-      <section className="col">
-        <h1 className="page-title">{name(s.participant_a)} × {name(s.participant_b)}</h1>
-        <div className="row">
-          <Badge status={statusBadge(s.status)}>{STATUS_LABEL[s.status] ?? s.status}</Badge>
-          <span className="muted">{isDemo ? "Saved demo conversation" : data.people.some((p) => p.is_test) ? "Synthetic QA fixtures — generated by this site" : "Generated by this site"} · {data.messages.length}/{s.turns_planned} turns{s.model ? ` · ${s.model}` : ""}</span>
-        </div>
-        <div className="row">
-          <Link to="/participants/$id" params={{ id: s.participant_a }}>{name(s.participant_a)}'s profile</Link>
-          <Link to="/participants/$id" params={{ id: s.participant_b }}>{name(s.participant_b)}'s profile</Link>
-        </div>
-      </section>
-
-      {working && (
-        <AgentStatusCard
-          name={s.status === "evaluating" ? "Match Evaluator" : `${name(data.messages.length % 2 === 0 ? s.participant_a : s.participant_b)}'s agent`}
-          activity={s.status === "evaluating" ? "Writing both directional evaluations." : "Composing the next message."}
-          status="running"
-          progress={s.status === "evaluating" ? undefined : progress}
-          tone={s.status === "evaluating" ? "pink" : "blue"}
-        />
-      )}
-      {(err || s.error) && <div className="alert" role="alert">{err ?? s.error}</div>}
-      {!pass.passcode && s.status !== "completed" && <PasscodeGate onSave={pass.save} />}
-      {!autoRun && pass.passcode && (s.status === "running" || s.status === "evaluating" || s.status === "failed") && (
-        <div><Button variant="agent" onClick={() => { setErr(null); setAutoRun(true); }}>{s.status === "failed" ? "Resume" : "Continue"} date</Button></div>
-      )}
-
-      <section className="chat" aria-live="polite">
-        {data.messages.length === 0 && <p className="muted">No messages generated yet.</p>}
-        {s.status !== "completed" && data.messages.length > 0 && data.messages.length < s.turns_planned && !working && <div className="notice">Interrupted: {data.messages.length} of {s.turns_planned} messages were generated and saved. No evaluation exists for this pair yet.</div>}
-        {s.status === "failed" && data.messages.length >= s.turns_planned && data.evaluations.length < 2 && <div className="notice">Conversation complete, but evaluation failed. This pair is not ranked.</div>}
-        {data.messages.map((m) => (
-          <div key={m.turn} className={`bubble ${m.speaker_id === s.participant_b ? "bubble--b" : ""}`}>
-            <div className="pw-meta">{name(m.speaker_id)}'s agent · turn {m.turn + 1}</div>
-            {m.content}
+      <section className="stack">
+        <div className="row"><RecordKind isDemo={isDemo} isTest={isTest} /><Badge status={state.badge}>{state.label}</Badge></div>
+        <div className="date-head">
+          <Link to="/participants/$id" params={{ id: s.participant_a }} className="person">
+            <Avatar name={name(s.participant_a)} tone="blue" /><div><strong>{name(s.participant_a)}</strong><p className="meta">'s agent</p></div>
+          </Link>
+          <div className="stack stack--sm" style={{ alignItems: "center" }}>
+            <div className="turns" role="img" aria-label={`${n} of ${s.turns_planned} messages`}>
+              {Array.from({ length: s.turns_planned }, (_, i) => <span key={i} data-done={i < n} data-current={working && i === n} />)}
+            </div>
+            <span className="meta">{n} / {s.turns_planned} messages</span>
           </div>
-        ))}
+          <Link to="/participants/$id" params={{ id: s.participant_b }} className="person person--right">
+            <Avatar name={name(s.participant_b)} tone="pink" /><div><strong>{name(s.participant_b)}</strong><p className="meta">'s agent</p></div>
+          </Link>
+        </div>
+        <p className="muted">{state.note}</p>
       </section>
 
-      {data.evaluations.length > 0 && (
-        <section>
-          <h2 className="section-title">Directional evaluations</h2>
+      {(err || (s.error && !working)) && (
+        <ErrorNote onRetry={canContinue ? () => { setErr(null); setResumed(true); setAutoRun(true); } : undefined} retryLabel={complete ? "Retry evaluation" : "Resume from message " + (n + 1)}>
+          {err ?? s.error} Saved messages are kept; retrying continues from where it stopped.
+        </ErrorNote>
+      )}
+      {!pass.passcode && s.status !== "completed" && (
+        <Card><div className="stack stack--sm"><strong>Continue this date</strong><p className="muted">Generating messages uses AI credits, so it needs the access code.</p><PasscodeGate onSave={pass.save} /></div></Card>
+      )}
+      {canContinue && !autoRun && !err && !s.error && (
+        <div><Button variant="agent" onClick={() => { setResumed(n > 0); setAutoRun(true); }}><Icon name="conversation" />{n === 0 ? "Start the date" : complete ? "Run evaluation" : "Resume date"}</Button></div>
+      )}
+
+      <section className="chat" aria-live="polite" aria-label="Conversation">
+        {n === 0 && !working && <p className="muted">No messages generated yet.</p>}
+        {data.messages.map((m) => {
+          const b = m.speaker_id === s.participant_b;
+          return (
+            <div key={m.turn} id={`m-${m.turn}`} className={`msg${b ? " msg--b" : ""}`}>
+              <Avatar name={name(m.speaker_id)} tone={b ? "pink" : "blue"} size="sm" />
+              <div className="msg__col">
+                <span className="meta">{name(m.speaker_id)}'s agent · {m.turn + 1}</span>
+                <div className="bubble">{m.content}</div>
+              </div>
+            </div>
+          );
+        })}
+        {working && s.status !== "evaluating" && (
+          <div className={`msg${n % 2 === 1 ? " msg--b" : ""}`}>
+            <Avatar name={name(n % 2 === 0 ? s.participant_a : s.participant_b)} tone={n % 2 === 1 ? "pink" : "blue"} size="sm" />
+            <div className="bubble" aria-label="Typing"><span className="typing"><i /><i /><i /></span></div>
+          </div>
+        )}
+      </section>
+
+      <details className="drawer">
+        <summary>What each agent knows (evidence)</summary>
+        <div className="grid">
+          {[s.participant_a, s.participant_b].map((pid) => {
+            const d = (person(pid) as any)?.profiles_analysis?.data as Record<string, Ev[]> | undefined;
+            const claims = d ? ["interests", "hobbies", "values"].flatMap((k) => d[k] ?? []).slice(0, 6) : [];
+            return (
+              <div key={pid} className="stack stack--sm">
+                <strong>{name(pid)}</strong>
+                {claims.length === 0 ? <p className="muted">No profile evidence available.</p> : claims.map((c, i) => (
+                  <div key={i} className="claim"><span className="muted">{c.claim}</span><blockquote className="quote">“{c.quote}” · {c.source === "linkedin" ? "LinkedIn" : "Instagram"}</blockquote></div>
+                ))}
+                <Link to="/participants/$id" params={{ id: pid }} className="meta">Full profile →</Link>
+              </div>
+            );
+          })}
+        </div>
+      </details>
+
+      <section className="stack">
+        <h2 className="h2">Match breakdowns</h2>
+        {data.evaluations.length === 0 ? (
+          <EmptyState icon="star" title="Not evaluated yet">{complete ? "The conversation is complete; the evaluation hasn't finished." : `Evaluations run only after all ${s.turns_planned} messages exist.`}</EmptyState>
+        ) : (
           <div className="grid">
-            {data.evaluations.map((e) => (
-              <Card key={e.evaluator_id} variant="raised">
-                <div className="col">
-                  <h3 className="pw-title">{name(e.evaluator_id)} → {name(e.candidate_id)}</h3>
-                  <div className="row"><span className="pw-score">{e.score === null ? "No score" : `${e.score}%`}</span><span className="muted">{e.confidence} confidence · {rubricSummary(e.rubric as Rubric).rated.length} of 5 criteria rated</span></div>
-                  {e.score === null && <p className="muted">{noScoreReason(e.rubric as Rubric, e.confidence as Confidence)}</p>}
-                  <p className="pw-meta">{SCORE_DISCLAIMER}</p>
-                  <p className="pw-small">{e.explanation}</p>
-                  <table className="table">
-                    <tbody>
-                      {(Object.keys(RUBRIC_WEIGHTS) as RubricKey[]).map((k) => {
-                        const v = (e.rubric as Record<string, number | null>)[k];
-                        const ce = readCriteriaEvidence(e.criteria_evidence)?.[k];
-                        return (
-                          <tr key={k}>
-                            <td>{k.replace(/_/g, " ")}</td>
-                            <td>{v ?? "unknown"}{v !== null && v !== undefined ? " / 5" : ""}</td>
-                            <td className="pw-small">
-                              {ce ? (<>{ce.reason}{ce.refs.length > 0 && <div className="muted">Evidence: {ce.refs.map((r) => r.ref.startsWith("M") ? `message ${Number(r.ref.slice(1)) + 1}` : `“${r.label}”`).join("; ")}</div>}</>) : <span className="muted">Not recorded (legacy evaluation)</span>}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                  {(e.shared_interests as string[]).length > 0 && <div className="pw-chips">{(e.shared_interests as string[]).map((x) => <span key={x} className="pw-chip">{x}</span>)}</div>}
-                  {(e.conflicts as string[]).length > 0 && <p className="muted">Conflicts: {(e.conflicts as string[]).join("; ")}</p>}
-                  {(e.unknowns as string[]).length > 0 && <p className="muted">Unknowns: {(e.unknowns as string[]).join("; ")}</p>}
+            {([[s.participant_a, evalA], [s.participant_b, evalB]] as const).map(([pid, e]) => (
+              <Card key={pid} variant="raised">
+                <div className="stack">
+                  <strong>How {name(pid)}'s agent saw {name(pid === s.participant_a ? s.participant_b : s.participant_a)}</strong>
+                  {!e ? <p className="muted">This direction hasn't been evaluated.</p> : (
+                    <>
+                      <div className="row"><span className="score-sm">{e.score === null ? "No score" : e.score}</span><ConfidenceLabel value={e.confidence} /></div>
+                      <CriteriaMeter rated={rubricSummary(e.rubric as Rubric).rated.length} />
+                      <Link to="/match/$sessionId/$evaluatorId" params={{ sessionId: s.id, evaluatorId: pid }} className="pw-button pw-button--secondary pw-button--sm">Full breakdown<Icon name="arrowRight" size="sm" /></Link>
+                    </>
+                  )}
                 </div>
               </Card>
             ))}
           </div>
-        </section>
-      )}
+        )}
+      </section>
     </AppShell>
   );
 }
