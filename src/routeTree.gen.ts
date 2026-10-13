@@ -10,21 +10,34 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DiscoverRouteImport } from './routes/discover'
 import { Route as JoinRouteImport } from './routes/join'
+import { Route as OpsRouteImport } from './routes/ops'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ParticipantsIdRouteImport } from './routes/participants.$id'
 import { Route as SessionsIdRouteImport } from './routes/sessions.$id'
 import { Route as Char91__componentChar93PreviewSplatRouteImport } from './routes/[__component].preview.$'
 import { Route as Char91__mockupChar93PreviewSplatRouteImport } from './routes/[__mockup].preview.$'
+import { Route as MatchSessionIdEvaluatorIdRouteImport } from './routes/match.$sessionId.$evaluatorId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DiscoverRoute = DiscoverRouteImport.update({
+  id: '/discover',
+  path: '/discover',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const JoinRoute = JoinRouteImport.update({
   id: '/join',
   path: '/join',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OpsRoute = OpsRouteImport.update({
+  id: '/ops',
+  path: '/ops',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -54,73 +67,100 @@ const Char91__mockupChar93PreviewSplatRoute =
     path: '/__mockup/preview/$',
     getParentRoute: () => rootRouteImport,
   } as any)
+const MatchSessionIdEvaluatorIdRoute =
+  MatchSessionIdEvaluatorIdRouteImport.update({
+    id: '/match/$sessionId/$evaluatorId',
+    path: '/match/$sessionId/$evaluatorId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/discover': typeof DiscoverRoute
   '/join': typeof JoinRoute
+  '/ops': typeof OpsRoute
   '/privacy': typeof PrivacyRoute
   '/participants/$id': typeof ParticipantsIdRoute
   '/sessions/$id': typeof SessionsIdRoute
   '/__component/preview/$': typeof Char91__componentChar93PreviewSplatRoute
   '/__mockup/preview/$': typeof Char91__mockupChar93PreviewSplatRoute
+  '/match/$sessionId/$evaluatorId': typeof MatchSessionIdEvaluatorIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/discover': typeof DiscoverRoute
   '/join': typeof JoinRoute
+  '/ops': typeof OpsRoute
   '/privacy': typeof PrivacyRoute
   '/participants/$id': typeof ParticipantsIdRoute
   '/sessions/$id': typeof SessionsIdRoute
   '/__component/preview/$': typeof Char91__componentChar93PreviewSplatRoute
   '/__mockup/preview/$': typeof Char91__mockupChar93PreviewSplatRoute
+  '/match/$sessionId/$evaluatorId': typeof MatchSessionIdEvaluatorIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/discover': typeof DiscoverRoute
   '/join': typeof JoinRoute
+  '/ops': typeof OpsRoute
   '/privacy': typeof PrivacyRoute
   '/participants/$id': typeof ParticipantsIdRoute
   '/sessions/$id': typeof SessionsIdRoute
   '/__component/preview/$': typeof Char91__componentChar93PreviewSplatRoute
   '/__mockup/preview/$': typeof Char91__mockupChar93PreviewSplatRoute
+  '/match/$sessionId/$evaluatorId': typeof MatchSessionIdEvaluatorIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/discover'
     | '/join'
+    | '/ops'
     | '/privacy'
     | '/participants/$id'
     | '/sessions/$id'
     | '/__component/preview/$'
     | '/__mockup/preview/$'
+    | '/match/$sessionId/$evaluatorId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/discover'
     | '/join'
+    | '/ops'
     | '/privacy'
     | '/participants/$id'
     | '/sessions/$id'
     | '/__component/preview/$'
     | '/__mockup/preview/$'
+    | '/match/$sessionId/$evaluatorId'
   id:
     | '__root__'
     | '/'
+    | '/discover'
     | '/join'
+    | '/ops'
     | '/privacy'
     | '/participants/$id'
     | '/sessions/$id'
     | '/__component/preview/$'
     | '/__mockup/preview/$'
+    | '/match/$sessionId/$evaluatorId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DiscoverRoute: typeof DiscoverRoute
   JoinRoute: typeof JoinRoute
+  OpsRoute: typeof OpsRoute
   PrivacyRoute: typeof PrivacyRoute
   ParticipantsIdRoute: typeof ParticipantsIdRoute
   SessionsIdRoute: typeof SessionsIdRoute
   Char91__componentChar93PreviewSplatRoute: typeof Char91__componentChar93PreviewSplatRoute
   Char91__mockupChar93PreviewSplatRoute: typeof Char91__mockupChar93PreviewSplatRoute
+  MatchSessionIdEvaluatorIdRoute: typeof MatchSessionIdEvaluatorIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -132,11 +172,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/discover': {
+      id: '/discover'
+      path: '/discover'
+      fullPath: '/discover'
+      preLoaderRoute: typeof DiscoverRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/join': {
       id: '/join'
       path: '/join'
       fullPath: '/join'
       preLoaderRoute: typeof JoinRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ops': {
+      id: '/ops'
+      path: '/ops'
+      fullPath: '/ops'
+      preLoaderRoute: typeof OpsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -174,18 +228,28 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91__mockupChar93PreviewSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/match/$sessionId/$evaluatorId': {
+      id: '/match/$sessionId/$evaluatorId'
+      path: '/match/$sessionId/$evaluatorId'
+      fullPath: '/match/$sessionId/$evaluatorId'
+      preLoaderRoute: typeof MatchSessionIdEvaluatorIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DiscoverRoute: DiscoverRoute,
   JoinRoute: JoinRoute,
+  OpsRoute: OpsRoute,
   PrivacyRoute: PrivacyRoute,
   ParticipantsIdRoute: ParticipantsIdRoute,
   SessionsIdRoute: SessionsIdRoute,
   Char91__componentChar93PreviewSplatRoute:
     Char91__componentChar93PreviewSplatRoute,
   Char91__mockupChar93PreviewSplatRoute: Char91__mockupChar93PreviewSplatRoute,
+  MatchSessionIdEvaluatorIdRoute: MatchSessionIdEvaluatorIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

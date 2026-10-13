@@ -93,7 +93,7 @@ function Index() {
           <div className="grid">
             {people.map((p, i) => (
               <Link key={p.id} to="/participants/$id" params={{ id: p.id }} className="link-reset">
-                <Card variant="raised" className="card-hover">
+                <Card variant="raised">
                   <div className="stack">
                     <div className="row"><Avatar name={p.display_name} tone={tones[i % 3]} /><div className="stack stack--sm"><strong>{p.display_name}</strong><RecordKind isDemo={p.is_demo} /></div></div>
                     {(p.profiles_analysis as { summary: string } | null)?.summary
