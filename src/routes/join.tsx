@@ -29,6 +29,7 @@ function Join() {
   const LI = "https://www.linkedin.com/in/";
   const IG = "https://www.instagram.com/";
   const keepPrefix = (prefix: string, marker: RegExp) => (v: string) => {
+    if (prefix.startsWith(v)) return prefix;
     const m = v.match(marker);
     const rest = (m ? v.slice((m.index ?? 0) + m[0].length) : v.startsWith(prefix) ? v.slice(prefix.length) : v.replace(/^https?:\/\/(www\.)?/i, "").replace(/^[^/]*\//, "")).replace(/^@/, "").replace(/\s/g, "");
     return prefix + rest;
