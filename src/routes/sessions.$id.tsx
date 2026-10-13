@@ -97,9 +97,10 @@ function SessionPage() {
     <AppShell>
       <section className="stack">
         <div className="row"><RecordKind isDemo={isDemo} isTest={isTest} /><Badge status={state.badge}>{state.label}</Badge></div>
+        <h1 className="h2">{name(s.participant_a)} × {name(s.participant_b)}</h1>
         <div className="date-head">
           <Link to="/participants/$id" params={{ id: s.participant_a }} className="person">
-            <Avatar name={name(s.participant_a)} tone="blue" /><div><strong>{name(s.participant_a)}</strong><p className="meta">'s agent</p></div>
+            <Avatar name={name(s.participant_a)} tone="blue" /><div><strong>{name(s.participant_a)}</strong><p className="meta">Agent</p></div>
           </Link>
           <div className="stack stack--sm" style={{ alignItems: "center" }}>
             <div className="turns" role="img" aria-label={`${n} of ${s.turns_planned} messages`}>
@@ -108,7 +109,7 @@ function SessionPage() {
             <span className="meta">{n} / {s.turns_planned} messages</span>
           </div>
           <Link to="/participants/$id" params={{ id: s.participant_b }} className="person person--right">
-            <Avatar name={name(s.participant_b)} tone="pink" /><div><strong>{name(s.participant_b)}</strong><p className="meta">'s agent</p></div>
+            <Avatar name={name(s.participant_b)} tone="pink" /><div><strong>{name(s.participant_b)}</strong><p className="meta">Agent</p></div>
           </Link>
         </div>
         <p className="muted">{state.note}</p>
