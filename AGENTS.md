@@ -11,3 +11,4 @@
 - Profile analysis is idempotent via `src/lib/analysis.ts`: source-input SHA-256 stored in `profiles_analysis.input_hash` plus an atomic status claim — prevents duplicate model calls and detects stale profiles.
 - QA fixtures are flagged `participants.is_test` and excluded from lists, counters and real candidate pools — test data never mixes with real participants.
 - Evaluation criterion evidence (`evaluations.criteria_evidence`) only keeps refs validated against existing profile claims/messages (`src/lib/evidence.ts`); NULL = legacy row, shown as "not recorded".
+- Shared UI primitives (status labels, timeline, confirm dialog, record-kind badge) live in `src/components/AppShell.tsx`; pages compose them with design-system components — one place for honest status wording.
