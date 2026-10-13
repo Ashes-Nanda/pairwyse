@@ -238,7 +238,7 @@ function ParticipantPage() {
               });
             }}
           >
-            <Icon name="trash" />Delete participant data
+            Delete participant data
           </Button>
         </section>
       )}
