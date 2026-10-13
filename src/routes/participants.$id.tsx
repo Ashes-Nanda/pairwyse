@@ -8,7 +8,7 @@ import { AppShell, STATUS_LABEL, statusBadge } from "@/components/AppShell";
 import { PasscodeGate, usePasscode } from "@/components/Passcode";
 import { analyzeProfile, createSession, getParticipant, refreshIngestion, startIngestion } from "@/lib/pipeline.functions";
 
-const q = (id: string) => queryOptions({ queryKey: ["participant", id], queryFn: () => getParticipant({ data: { id, passcode: pc } }) });
+const q = (id: string) => queryOptions({ queryKey: ["participant", id], queryFn: () => getParticipant({ data: { id } }) });
 
 export const Route = createFileRoute("/participants/$id")({
   validateSearch: z.object({ autostart: z.boolean().optional() }),

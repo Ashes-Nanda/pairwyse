@@ -9,7 +9,7 @@ import { PasscodeGate, usePasscode } from "@/components/Passcode";
 import { evaluateSession, getSession, runNextTurn } from "@/lib/pipeline.functions";
 import { RUBRIC_WEIGHTS } from "@/lib/ranking";
 
-const q = (id: string) => queryOptions({ queryKey: ["session", id], queryFn: () => getSession({ data: { id, passcode: pass.passcode ?? "" } }) });
+const q = (id: string) => queryOptions({ queryKey: ["session", id], queryFn: () => getSession({ data: { id } }) });
 
 export const Route = createFileRoute("/sessions/$id")({
   validateSearch: z.object({ run: z.boolean().optional() }),
