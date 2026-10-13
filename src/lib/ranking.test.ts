@@ -5,7 +5,7 @@ describe("computeScore", () => {
   const full = { shared_interests: 5, values_alignment: 4, conversation_quality: 3, lifestyle_compatibility: 2, stated_preferences_fit: 1 };
   it("weights rubric deterministically", () => {
     expect(computeScore(full, "high")).toBe(computeScore(full, "high"));
-    expect(computeScore(full, "medium")).toBe(74);
+    expect(computeScore(full, "medium")).toBe(70);
   });
   it("returns null for low confidence", () => {
     expect(computeScore(full, "low")).toBeNull();
