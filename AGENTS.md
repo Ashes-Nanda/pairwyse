@@ -8,3 +8,6 @@
 - Long work is split into small server-function steps (start/poll ingestion, one agent turn per call, evaluate) orchestrated by the page — keeps each Worker request short and every step persisted.
 - Demo records are flagged `participants.is_demo`; the UI must label them as a saved run — honesty requirement.
 - Processing refuses participants without recorded consent.
+- Profile analysis is idempotent via `src/lib/analysis.ts`: source-input SHA-256 stored in `profiles_analysis.input_hash` plus an atomic status claim — prevents duplicate model calls and detects stale profiles.
+- QA fixtures are flagged `participants.is_test` and excluded from lists, counters and real candidate pools — test data never mixes with real participants.
+- Evaluation criterion evidence (`evaluations.criteria_evidence`) only keeps refs validated against existing profile claims/messages (`src/lib/evidence.ts`); NULL = legacy row, shown as "not recorded".
