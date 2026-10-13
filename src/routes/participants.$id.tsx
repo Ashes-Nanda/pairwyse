@@ -6,6 +6,7 @@ import { z } from "zod";
 import { Avatar, Badge, Button, Card, Icon, MatchResultCard } from "@/design-system/pairwise-2899a4";
 import { AppShell, STATUS_LABEL, statusBadge } from "@/components/AppShell";
 import { PasscodeGate, usePasscode } from "@/components/Passcode";
+import { COVERAGE_LABEL, SCORE_DISCLAIMER, noScoreReason, rubricSummary, type Rubric } from "@/lib/ranking";
 import { analyzeProfile, createSession, deleteParticipant, getParticipant, refreshIngestion, startIngestion } from "@/lib/pipeline.functions";
 
 const q = (id: string) => queryOptions({ queryKey: ["participant", id], queryFn: () => getParticipant({ data: { id } }) });
@@ -47,6 +48,7 @@ function ParticipantPage() {
   const [err, setErr] = useState<string | null>(null);
   const [partner, setPartner] = useState("");
   const started = useRef(false);
+  const autoAnalyzed = useRef(false);
   const pass = usePasscode();
   const pc = pass.passcode ?? "";
 
@@ -62,8 +64,9 @@ function ParticipantPage() {
     } catch (e) {
       setErr((e as Error).message);
     } finally {
-      setBusy(null);
+      // Refetch BEFORE clearing busy: clearing first re-ran the auto-analysis effect against stale status (duplicate model call).
       await reload();
+      setBusy(null);
     }
   }
 
@@ -79,14 +82,15 @@ function ParticipantPage() {
       const t = setTimeout(() => void act("refresh", () => refresh({ data: { id, passcode: pc } })), 8000);
       return () => clearTimeout(t);
     }
-    if ((status === "ingested" || status === "partial") && !busy) {
+    if ((status === "ingested" || status === "partial") && !busy && !autoAnalyzed.current) {
+      autoAnalyzed.current = true; // auto-trigger at most once per page view; server dedupes too
       void act("analyze", () => analyze({ data: { id, passcode: pc } }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, data?.sources.length, busy, pass.passcode]);
 
   if (!data) return <AppShell><p>Participant not found.</p></AppShell>;
-  const { participant: p, sources, profile, sessions, ranking, candidates, totalOthers } = data;
+  const { participant: p, sources, profile, sessions, ranking, candidates, totalOthers, profileFreshness } = data;
   const pd = profile?.data as { interests: Ev[]; hobbies: Ev[]; values: Ev[]; professional: Ev[]; stated_preferences: Ev[]; communication_style: string | null; uncertainties: string[] } | undefined;
 
   return (
@@ -97,7 +101,7 @@ function ParticipantPage() {
           <h1 className="page-title">{p.display_name}</h1>
           <div className="row">
             <Badge status={statusBadge(p.status)}>{STATUS_LABEL[p.status] ?? p.status}</Badge>
-            <span className="muted">{p.is_demo ? "Saved demo record" : "Live submission"} · consent recorded {p.consent_at ? new Date(p.consent_at).toLocaleDateString() : "—"}</span>
+            <span className="muted">{p.is_demo ? "Saved demo record" : p.is_test ? "Synthetic QA fixture — not a real person" : "Live submission"} · consent recorded {p.consent_at ? new Date(p.consent_at).toLocaleDateString() : "—"}</span>
           </div>
         </div>
       </section>
@@ -128,7 +132,7 @@ function ParticipantPage() {
           )}
           {status === "ingesting" && <Button variant="ghost" loading={busy === "refresh"} onClick={() => act("refresh", () => refresh({ data: { id, passcode: pc } }))}>Check status now</Button>}
           {["analysis_failed", "profiled", "partial"].includes(status ?? "") && (
-            <Button variant="agent" loading={busy === "analyze"} onClick={() => act("analyze", () => analyze({ data: { id, passcode: pc } }))}><Icon name="sparkles" />{profile ? "Re-run analysis" : "Analyse profile"}</Button>
+            <Button variant="agent" loading={busy === "analyze"} onClick={() => act("analyze", () => analyze({ data: { id, passcode: pc, force: profileFreshness === "current" } }))}><Icon name="sparkles" />{!profile ? "Analyse profile" : profileFreshness === "stale" ? "Regenerate (sources changed)" : "Re-run analysis"}</Button>
           )}
         </div>
       </section>
@@ -140,6 +144,7 @@ function ParticipantPage() {
         ) : (
           <div className="col">
             {profile.coverage === "partial" && <div className="notice">Partial coverage: built from one source only.</div>}
+            {profileFreshness === "stale" && <div className="notice">Sources changed since this profile was generated. It is shown as-is until you regenerate it.</div>}
             <p>{profile.summary}</p>
             {pd.communication_style && <p className="muted">Communication style: {pd.communication_style}</p>}
             <div className="grid">
@@ -202,6 +207,7 @@ function ParticipantPage() {
       <section>
         <h2 className="section-title">{p.display_name}'s ranking</h2>
         <p className="muted">Directional: how {p.display_name}'s agent rates each partner. Evaluated {ranking.length} of {totalOthers} other participants; unevaluated pairs are not ranked.</p>
+        <p className="pw-meta">{SCORE_DISCLAIMER}</p>
         {ranking.length === 0 ? <p className="muted">No completed evaluations yet.</p> : (
           <div className="col">
             {ranking.map((r) => (
@@ -209,12 +215,14 @@ function ParticipantPage() {
                 key={r.session_id}
                 name={`${r.rank ? `#${r.rank} ` : ""}${r.candidate_name}`}
                 score={r.score ?? undefined}
-                coverage={profile?.coverage === "full" ? "Full" : "Partial"}
+                subtitle={`${rubricSummary(r.rubric as Rubric).rated.length} of 5 criteria rated${rubricSummary(r.rubric as Rubric).unknown.length ? ` · unknown: ${rubricSummary(r.rubric as Rubric).unknown.map((k) => k.replace(/_/g, " ")).join(", ")}` : ""}`}
+                coverage={COVERAGE_LABEL[r.match_coverage]}
                 confidence={(r.confidence.charAt(0).toUpperCase() + r.confidence.slice(1)) as "Low" | "Medium" | "High"}
                 interests={r.shared_interests as string[]}
                 conflicts={r.conflicts as string[]}
                 explanation={r.explanation}
               >
+                {r.score === null && <p className="muted">{noScoreReason(r.rubric as Rubric, r.confidence)}</p>}
                 <Link to="/sessions/$id" params={{ id: r.session_id }} className="pw-small">View conversation →</Link>
               </MatchResultCard>
             ))}

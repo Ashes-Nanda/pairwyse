@@ -78,3 +78,41 @@ export function validateInstagramUrl(url: string): string | null {
     return "Not a valid URL";
   }
 }
+
+export type Coverage = "full" | "partial" | "missing";
+
+/**
+ * Match-specific evidence coverage: describes the pair, not the evaluator.
+ * Full only when both sides' profiles were built from both sources.
+ */
+export function matchCoverage(evaluator: Coverage | null | undefined, candidate: Coverage | null | undefined): Coverage {
+  if (!evaluator || !candidate) return "missing";
+  return evaluator === "full" && candidate === "full" ? "full" : "partial";
+}
+
+export const COVERAGE_LABEL: Record<Coverage, string> = {
+  full: "Full match", // both profiles built from 2 of 2 sources
+  partial: "Partial match", // at least one profile built from 1 of 2 sources
+  missing: "No match",
+};
+
+/** Which rubric criteria were rated vs unknown, for display. */
+export function rubricSummary(rubric: Partial<Record<RubricKey, number | null>> | null | undefined) {
+  const rated: RubricKey[] = [];
+  const unknown: RubricKey[] = [];
+  for (const k of Object.keys(RUBRIC_WEIGHTS) as RubricKey[]) {
+    const v = rubric?.[k];
+    if (v === null || v === undefined || Number.isNaN(v)) unknown.push(k);
+    else rated.push(k);
+  }
+  return { rated, unknown };
+}
+
+/** Why a row has no score (null when it has one). Mirrors computeScore's rules. */
+export function noScoreReason(rubric: Partial<Record<RubricKey, number | null>> | null | undefined, confidence: Confidence): string | null {
+  if (confidence === "low") return "No score: the evaluator's confidence was low.";
+  if (rubricSummary(rubric).rated.length < 3) return "No score: fewer than 3 of 5 criteria had enough evidence.";
+  return null;
+}
+
+export const SCORE_DISCLAIMER = "Exploratory comparison from available public evidence and one agent conversation — not a prediction of romantic success.";

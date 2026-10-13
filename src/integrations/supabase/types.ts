@@ -113,6 +113,7 @@ export type Database = {
           confidence: string
           conflicts: Json
           created_at: string
+          criteria_evidence: Json | null
           evaluator_id: string
           explanation: string
           id: string
@@ -128,6 +129,7 @@ export type Database = {
           confidence: string
           conflicts?: Json
           created_at?: string
+          criteria_evidence?: Json | null
           evaluator_id: string
           explanation: string
           id?: string
@@ -143,6 +145,7 @@ export type Database = {
           confidence?: string
           conflicts?: Json
           created_at?: string
+          criteria_evidence?: Json | null
           evaluator_id?: string
           explanation?: string
           id?: string
@@ -188,6 +191,7 @@ export type Database = {
           id: string
           instagram_url: string
           is_demo: boolean
+          is_test: boolean
           linkedin_url: string
           status: string
           updated_at: string
@@ -202,6 +206,7 @@ export type Database = {
           id?: string
           instagram_url: string
           is_demo?: boolean
+          is_test?: boolean
           linkedin_url: string
           status?: string
           updated_at?: string
@@ -216,6 +221,7 @@ export type Database = {
           id?: string
           instagram_url?: string
           is_demo?: boolean
+          is_test?: boolean
           linkedin_url?: string
           status?: string
           updated_at?: string
@@ -227,6 +233,7 @@ export type Database = {
           coverage: string
           created_at: string
           data: Json
+          input_hash: string | null
           model: string
           participant_id: string
           summary: string
@@ -235,6 +242,7 @@ export type Database = {
           coverage: string
           created_at?: string
           data: Json
+          input_hash?: string | null
           model: string
           participant_id: string
           summary: string
@@ -243,6 +251,7 @@ export type Database = {
           coverage?: string
           created_at?: string
           data?: Json
+          input_hash?: string | null
           model?: string
           participant_id?: string
           summary?: string
