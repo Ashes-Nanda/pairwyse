@@ -320,13 +320,9 @@ export const runNextTurn = createServerFn({ method: "POST" })
     const myProfile = (me as any)?.profiles_analysis;
     const { buildDatingInstructions, composeTurn } = await import("./prompts");
     const instructions = buildDatingInstructions({ me: me?.display_name ?? "", them: them?.display_name ?? "", profileJson: JSON.stringify(myProfile?.data ?? {}), turn, turnsPlanned: s.turns_planned });
-    const _legacy = `You are the PAIRWISE dating agent representing ${me?.display_name}. You are on a first text-based "date" with the agent for ${them?.display_name}.
-Speak in first person as ${me?.display_name}'s representative, warm and curious. Use ONLY facts from this evidence-backed profile; if asked something not covered, say you're not sure / it isn't in your profile. Never invent experiences, never claim protected attributes. Ask genuine questions to discover compatibility. Keep each message 1-3 sentences.${turn >= s.turns_planned - 2 ? " The date is ending: wrap up naturally." : ""}
-Profile: ${JSON.stringify(myProfile?.data ?? {}).slice(0, 8000)}`;
     const history = (msgs ?? []).map((m) => ({ role: (m.speaker_id === speaker ? "assistant" : "user") as "assistant" | "user", content: m.content }));
     if (!history.length) history.push({ role: "user", content: `(The date begins. Introduce yourself to ${them?.display_name}'s agent.)` });
     try {
-      void _legacy;
       const { text: reply } = await composeTurn(generateTextReply, instructions, history, (c) => ({ role: "user" as const, content: c }), (c) => ({ role: "assistant" as const, content: c }));
       const { error } = await db.from("date_messages").insert({ session_id: s.id, turn, speaker_id: speaker, content: reply });
       if (error && error.code !== "23505") throw new Error(error.message);
