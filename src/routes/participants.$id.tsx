@@ -101,7 +101,7 @@ function ParticipantPage() {
           <h1 className="page-title">{p.display_name}</h1>
           <div className="row">
             <Badge status={statusBadge(p.status)}>{STATUS_LABEL[p.status] ?? p.status}</Badge>
-            <span className="muted">{p.is_demo ? "Saved demo record" : "Live submission"} · consent recorded {p.consent_at ? new Date(p.consent_at).toLocaleDateString() : "—"}</span>
+            <span className="muted">{p.is_demo ? "Saved demo record" : p.is_test ? "Synthetic QA fixture — not a real person" : "Live submission"} · consent recorded {p.consent_at ? new Date(p.consent_at).toLocaleDateString() : "—"}</span>
           </div>
         </div>
       </section>

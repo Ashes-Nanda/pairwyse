@@ -95,7 +95,7 @@ export const getSession = createServerFn({ method: "GET" })
     const [{ data: msgs }, { data: evals }, { data: people }] = await Promise.all([
       db.from("date_messages").select("turn, speaker_id, content, created_at").eq("session_id", data.id).order("turn"),
       db.from("evaluations").select("evaluator_id, candidate_id, score, confidence, explanation, shared_interests, conflicts, unknowns, rubric, criteria_evidence").eq("session_id", data.id),
-      db.from("participants").select("id, display_name, is_demo").in("id", [s.participant_a, s.participant_b]),
+      db.from("participants").select("id, display_name, is_demo, is_test").in("id", [s.participant_a, s.participant_b]),
     ]);
     return { session: s, messages: msgs ?? [], evaluations: evals ?? [], people: people ?? [] };
   });
